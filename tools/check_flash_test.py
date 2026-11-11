@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (C) 2026 delirioux
-"""Xebec - run the flash driver test image in fm1-emu and check it three ways.
+"""Xebec - run the flash driver and loader staging test in fm1-emu, checked three ways.
 
     tools/check_flash_test.py FM1_EMU build/test
 
-1. The test's own record (xb_flash_test): every step passed.
+1. The test's own record (xb_flash_test): every step passed, among them
+   staging M-VAVE's loader and reading it back byte for byte.
 2. The emulator's flash command log (FM1_FLASH_TRACE): the only erases and
-   programs that reached the chip are the expected ones, all inside the
-   first sector of the write window; nothing else that changes the chip.
+   programs that reached the chip are the expected ones, in the expected
+   order, all inside the staging area at the start of the write window
+   (the loader's head written last); nothing else that changes the chip.
 3. The emulator's instruction trace: each call into the driver's RAM code
    stays in RAM from entry to return (no fetch from flash in between), and
    there are exactly as many of those stays as the test made calls.
@@ -20,11 +22,14 @@ import sys
 
 import xbelf
 
-STEPS = 3_000_000
-ALL_PASSED = (1 << 13) - 1
-EXPECTED_ERASES = 2      # steps 8 and 12
-EXPECTED_PROGRAMS = 3    # step 9: two pages; step 11: one page, then the read-back stops it
-EXPECTED_RAM_CALLS = 48
+STEPS = 12_000_000
+ALL_PASSED = (1 << 16) - 1
+AREA_LEN = 0x5000        # the loader's staging area (ota_stage.h)
+LOADER_LEN = 0x4DE1      # M-VAVE's loader without its head
+# Calls into the RAM code: 48 for steps 1-13; staging 323 (5 erases with
+# their blank checks, 79 pages written and read back, 78 CRC reads, the
+# head); reading it back 81; unstaging and the blank check 125.
+EXPECTED_RAM_CALLS = 577
 FIELDS = ["magic", "done", "passed", "failed", "first_fail", "ram_calls", "id", "safe_lo"]
 
 # Commands that change the chip: page / quad program, sector / block / chip
@@ -107,12 +112,20 @@ def main():
     for c, a in writes:
         if c not in (0x20, 0x02):
             problems.append(f"command {c:#04x} at {a:#08x} reached the chip")
-        elif not safe_lo <= a < safe_lo + 0x1000:
-            problems.append(f"command {c:#04x} at {a:#08x}, outside the test sector {safe_lo:#08x}")
-    if erases != [safe_lo] * EXPECTED_ERASES:
-        problems.append(f"sector erases at {[hex(a) for a in erases]}, expected {EXPECTED_ERASES} at {safe_lo:#x}")
-    if len(programs) != EXPECTED_PROGRAMS:
-        problems.append(f"{len(programs)} page programs, expected {EXPECTED_PROGRAMS}")
+        elif not safe_lo <= a < safe_lo + AREA_LEN:
+            problems.append(f"command {c:#04x} at {a:#08x}, outside the test area {safe_lo:#08x}")
+    area = [safe_lo + i for i in range(0, AREA_LEN, 0x1000)]
+    want_erases = [safe_lo, safe_lo] + area + area      # steps 8 and 12, staging, unstaging
+    if erases != want_erases:
+        problems.append(f"sector erases at {[hex(a) for a in erases]}, expected {[hex(a) for a in want_erases]}")
+    # step 9: two pages; step 11: one page, then the read-back stops it;
+    # staging: the loader page by page from area + 32, then the head at the area
+    first = safe_lo + 32
+    body = [first] + list(range((first & ~0xFF) + 0x100, first + LOADER_LEN, 0x100))
+    want_programs = [safe_lo + 0x80, safe_lo + 0x100, safe_lo + 0x80] + body + [safe_lo]
+    if programs != want_programs:
+        problems.append(f"{len(programs)} page programs, expected {len(want_programs)} in this order: "
+                        f"first difference at {next((i for i, (a, b) in enumerate(zip(programs, want_programs)) if a != b), min(len(programs), len(want_programs)))}")
 
     # 3. The trace.
     stays, stray, parked, n = run_trace(emu, xip, ram_lo, ram_hi, park)

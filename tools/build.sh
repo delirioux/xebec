@@ -53,6 +53,11 @@ for src in "$ROOT"/firmware/boot/*.c "$ROOT"/firmware/board/*.c "$ROOT"/firmware
     compile "$src" "$obj"
     COMMON="$COMMON $obj"
 done
+# M-VAVE's OTA loader (vendor/m-vave, Apache-2.0), checked and turned into C.
+mkdir -p "$OUT/gen"
+python3 "$ROOT/tools/gen_loader.py" "$ROOT/vendor/m-vave/ota.bin" "$OUT/gen/ota_loader.c"
+compile "$OUT/gen/ota_loader.c" "$OUT/obj/ota_loader.o"
+COMMON="$COMMON $OUT/obj/ota_loader.o"
 compile "$ROOT/firmware/src/main.c" "$OUT/obj/main.o"
 compile "$ROOT/firmware/test/flash_test.c" "$OUT/test/obj/flash_test.o"
 

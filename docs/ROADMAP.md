@@ -18,14 +18,17 @@ Status: ✅ done · 🔨 in progress · ⬜ to do
 
 ### 2. Update path 🔨
 
-- ✅ Hand-over to the OTA loader worked out: an 80-byte update record at RAM `0x01C7FD88` (CRC, type, status `0x5A00`, magic `0x5440`, name `ota-FM-1_0xx`, loader location and length), then a soft reset
+- ✅ Hand-over to the OTA loader worked out: an 80-byte update record at RAM `0x01C7FD88` (CRC, type `0x5A0D` for the USB loader, status `0x5A01`, magic `0x5441`, name `ota-FM-1_0xx`, loader location and length), then a soft reset
 - ✅ Where the loader goes: the official app stages it in free flash after its own image, on a 128 KiB boundary, written in 4 KiB blocks, clear of the user area
 - ✅ Flash driver that runs from RAM (erase and write while the code itself lives in flash)
   - Writes only inside its window: from the first 128 KiB boundary past Xebec's own image up to flash `0xE0000`, clear of the boot loader below and the official firmware's areas above
   - Known flash chips only (Puya `85 60 14`, UC25HQ80 `B3 60 14`), write enable checked, every erase and write read back before it counts
   - Every build checks that the RAM code never reaches back into flash, and runs a driver test image in fm1-emu (refusals, erase, write, read-back, the commands that reach the chip, and a trace that each driver call stays in RAM)
   - The firmware itself only reads the chip's ID for now (the FLASH line on the boot screen); erase and write are first used by the update path
-- ⬜ Xebec carries M-VAVE's OTA loader (Apache-2.0) and stages it the same way
+- ✅ Xebec carries M-VAVE's OTA loader (Apache-2.0) and stages it the same way
+  - `vendor/m-vave/ota.bin`, unchanged; the build checks its SHA-256 and CRCs
+  - Staged at the start of the write window (`0x20000` now): erase 20 KiB, write the loader, read it back against its CRC, then its file head last; on any failure the area is erased again
+  - Every build stages it in fm1-emu and reads it back byte for byte
 - ⬜ Key held at power-on: stage the loader, write the record, restart into the loader
 - ⬜ Own update package for the FM-1 (`.fwsc`), with M-VAVE's boot loader, OTA loader and config byte for byte unchanged; the flash driver's write window checked against the package's layout
 - ⬜ First install on a real FM-1, display bring-up confirmed

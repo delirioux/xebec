@@ -5,7 +5,7 @@
 # 2. Build fm1-emu (joakimeriksson/fm1-emu, MIT) at a pinned commit, run the
 #    image in it and check the screen it draws.
 # 3. Check that the flash driver's RAM code never reaches into flash, and
-#    run the flash driver test image in fm1-emu.
+#    run the flash driver and loader staging test image in fm1-emu.
 # The run's artifact "xebec-build" holds the app image, the disassembly,
 # the link map and the screen capture.
 name: Firmware
@@ -59,7 +59,7 @@ jobs:
           python3 tools/check_ram_code.py emu/target/release/fm1-emu build/xebec.elf build/xebec_xip.bin
           python3 tools/check_ram_code.py emu/target/release/fm1-emu build/test/xebec_flashtest.elf build/test/xebec_flashtest_xip.bin
 
-      - name: Flash driver test in fm1-emu
+      - name: Flash driver and loader staging test in fm1-emu
         run: python3 tools/check_flash_test.py emu/target/release/fm1-emu build/test
 
       - name: Run in fm1-emu and check the boot screen

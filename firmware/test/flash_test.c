@@ -2,8 +2,8 @@
  *
  * Copyright (C) 2026 delirioux
  *
- * Xebec - flash driver test image, for fm1-emu only (never for an FM-1:
- * it erases and writes the first sector of the write window).
+ * Xebec - flash driver and loader staging test image, for fm1-emu only
+ * (never for an FM-1: it erases and writes the start of the write window).
  *
  * Built next to the firmware from the same driver code, with this file in
  * place of main.c. Runs every step once, records the outcome in
@@ -11,8 +11,9 @@
  * reads the record and the emulator's flash command log and its trace.
  */
 #include "../board/flash.h"
+#include "../src/ota_stage.h"
 
-#define STEPS 13u
+#define STEPS 16u
 
 struct xb_flash_test_result {
     uint32_t magic;        /* 'XBFT' when the test ran to its end */
@@ -35,6 +36,23 @@ static const uint8_t in_flash[16] = {
     0x58, 0x45, 0x42, 0x45, 0x43, 0x00, 0x01, 0x02,
     0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A,
 };
+
+/* The staged head as it must be, built here from the bytes themselves
+ * rather than through ota_stage.c. */
+static int head_ok(const uint8_t *h, uint32_t area)
+{
+    static const uint8_t want[XB_OTA_HEAD_LEN] = {
+        0, 0, 0xFF, 0xFF, 0, 0, 0, 0,               /* CRC (below), 0xFFFF, area (below) */
+        0x01, 0x4E, 0x00, 0x00, 0x41, 0xFF, 0xFF, 0xFF, /* 0x4DE1 + 32, attribute, 0xFF, 0xFFFF */
+        'L', 'O', 'A', 'D', 'E', 'R', '.', 'B', 'I', 'N', 0, 0, 0, 0, 0, 0,
+    };
+    uint32_t i;
+
+    for (i = 2; i < XB_OTA_HEAD_LEN; i++)
+        if (i >= 4u && i < 8u ? h[i] != (uint8_t)(area >> (8u * (i - 4u))) : h[i] != want[i])
+            return 0;
+    return (h[0] | (uint32_t)h[1] << 8) == xb_ota_crc16(h + 2, XB_OTA_HEAD_LEN - 2u, 0);
+}
 
 static void step(uint32_t n, int ok)
 {
@@ -112,6 +130,27 @@ void xb_main(void)
 
     /* 13. And the start of the sector is blank again. */
     step(13, xb_flash_read(lo, readback, 512u) == XB_FLASH_OK && all(readback, 512u, 0xFFu));
+
+    /* 14. Stage M-VAVE's loader at the start of the window. */
+    step(14, xb_ota_stage() == XB_FLASH_OK && xb_ota_area() == lo);
+
+    /* 15. Read the whole area back: the head, the loader byte for byte
+     *     (ota.bin past its own head), and blank flash after it. */
+    ok = xb_flash_read(lo, readback, XB_OTA_HEAD_LEN) == XB_FLASH_OK && head_ok(readback, lo);
+    for (i = XB_OTA_HEAD_LEN; ok && i < XB_OTA_AREA_LEN; i += 256u) {
+        uint32_t k;
+
+        ok = xb_flash_read(lo + i, readback, 256u) == XB_FLASH_OK;
+        for (k = 0; ok && k < 256u && i + k < XB_OTA_AREA_LEN; k++)
+            ok = readback[k] == (i + k < xb_ota_loader_len ? xb_ota_loader[i + k] : 0xFFu);
+    }
+    step(15, ok);
+
+    /* 16. Unstage: the whole area blank again. */
+    ok = xb_ota_unstage() == XB_FLASH_OK;
+    for (i = 0; ok && i < XB_OTA_AREA_LEN; i += 512u)
+        ok = xb_flash_read(lo + i, readback, 512u) == XB_FLASH_OK && all(readback, 512u, 0xFFu);
+    step(16, ok);
 
     xb_flash_test.ram_calls = xb_flash_ram_calls;
     xb_flash_test.magic = 0x54464258u;   /* 'XBFT' */
