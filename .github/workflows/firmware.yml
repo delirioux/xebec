@@ -4,6 +4,8 @@
 # 1. Fetch JieLi's toolchain from JieLi's own server and build the app image.
 # 2. Build fm1-emu (joakimeriksson/fm1-emu, MIT) at a pinned commit, run the
 #    image in it and check the screen it draws.
+# 3. Check that the flash driver's RAM code never reaches into flash, and
+#    run the flash driver test image in fm1-emu.
 # The run's artifact "xebec-build" holds the app image, the disassembly,
 # the link map and the screen capture.
 name: Firmware
@@ -52,6 +54,14 @@ jobs:
           git -C emu checkout "$FM1_EMU_COMMIT"
           cargo build --release -p fm1-emu --manifest-path emu/Cargo.toml
 
+      - name: Flash driver RAM code stays in RAM
+        run: |
+          python3 tools/check_ram_code.py emu/target/release/fm1-emu build/xebec.elf build/xebec_xip.bin
+          python3 tools/check_ram_code.py emu/target/release/fm1-emu build/test/xebec_flashtest.elf build/test/xebec_flashtest_xip.bin
+
+      - name: Flash driver test in fm1-emu
+        run: python3 tools/check_flash_test.py emu/target/release/fm1-emu build/test
+
       - name: Run in fm1-emu and check the boot screen
         run: |
           mkdir -p work
@@ -68,4 +78,6 @@ jobs:
             build/xebec_xip.bin
             build/xebec.dis
             build/xebec.map
+            build/test/xebec_flashtest.dis
+            build/test/xebec_flashtest.map
             work/*.bmp

@@ -9,6 +9,7 @@
  * line on screen shows where.
  */
 #include "../board/lcd.h"
+#include "../board/flash.h"
 #include "text.h"
 #include "ramtest.h"
 #include "version.h"
@@ -35,6 +36,14 @@
 #define RESULT_X    204u
 
 static unsigned check_line;
+
+/* Read-only: the chip answers through the RAM driver with a known JEDEC ID. */
+static int flash_check(void)
+{
+    uint32_t id;
+
+    return xb_flash_id(&id) == XB_FLASH_OK && XB_FLASH_KNOWN(id);
+}
 
 static void check(const char *label, int ok)
 {
@@ -68,6 +77,7 @@ void xb_main(void)
     check("DISPLAY", 1);
     check("RAM 64K", xb_ramtest());
     check("CORE 0", 1);
+    check("FLASH", flash_check());
 
     w = xb_text_width("READY", 2);
     xb_text_draw((XB_LCD_W - w) / 2u, 208u, "READY", 2, XB_COLOUR_TEXT, XB_COLOUR_SEA);

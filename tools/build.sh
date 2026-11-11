@@ -11,6 +11,8 @@
 #   xebec_xip.bin    the same, padded to start at 0x02000000 (for fm1-emu --bin)
 #   xebec.dis        disassembly
 #   xebec.map        link map
+# and in build/test/ the same for xebec_flashtest, the flash driver test
+# image (firmware/test/flash_test.c in place of main.c; fm1-emu only).
 set -eu
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -35,41 +37,60 @@ BUILD="$(git -C "$ROOT" rev-parse --short=7 HEAD 2>/dev/null | tr 'a-f' 'A-F' ||
 [ -n "$BUILD" ] || BUILD="LOCAL"
 
 rm -rf "$OUT"
-mkdir -p "$OUT/obj"
+mkdir -p "$OUT/obj" "$OUT/test/obj"
 
-OBJS=""
+compile() {
+    "$CC" $CFLAGS "-DXB_BUILD=\"$BUILD\"" -c "$1" -o "$2"
+}
+
+# Everything but main.c, shared by the firmware and the test image.
+COMMON=""
 "$CC" -target pi32v2 -mcpu=r3 -c "$ROOT/firmware/boot/start.S" -o "$OUT/obj/start.o"
-OBJS="$OBJS $OUT/obj/start.o"
+COMMON="$COMMON $OUT/obj/start.o"
 for src in "$ROOT"/firmware/boot/*.c "$ROOT"/firmware/board/*.c "$ROOT"/firmware/src/*.c; do
+    [ "$(basename "$src")" = main.c ] && continue
     obj="$OUT/obj/$(basename "$src" .c).o"
-    "$CC" $CFLAGS "-DXB_BUILD=\"$BUILD\"" -c "$src" -o "$obj"
-    OBJS="$OBJS $obj"
+    compile "$src" "$obj"
+    COMMON="$COMMON $obj"
 done
+compile "$ROOT/firmware/src/main.c" "$OUT/obj/main.o"
+compile "$ROOT/firmware/test/flash_test.c" "$OUT/test/obj/flash_test.o"
 
-"$LD" -T "$ROOT/firmware/boot/xebec.ld" --gc-sections -Map "$OUT/xebec.map" \
-    $OBJS -o "$OUT/xebec.elf"
+# image DIR NAME MAIN_OBJ: link and write DIR/NAME.elf, NAME_app.bin,
+# NAME_xip.bin, NAME.dis and NAME.map.
+image() {
+    dir="$1"; name="$2"; main_obj="$3"
 
-# JieLi's objcopy takes exactly one -j per call: code and data separately.
-"$OBJCOPY" -O binary -j .text "$OUT/xebec.elf" "$OUT/text.bin"
-"$OBJCOPY" -O binary -j .data "$OUT/xebec.elf" "$OUT/data.bin"
-"$OBJDUMP" -d "$OUT/xebec.elf" > "$OUT/xebec.dis"
+    "$LD" -T "$ROOT/firmware/boot/xebec.ld" --gc-sections -Map "$dir/$name.map" \
+        $COMMON "$main_obj" -o "$dir/$name.elf"
 
-# Join them: .data's flash copy sits at __xb_data_load (from the link map).
-# fm1-emu loads --bin at 0x02000000, so the XIP image gets the 0x120-byte
-# header gap in front.
-python3 - "$OUT" <<'EOF'
+    # JieLi's objcopy takes exactly one -j per call: code and data separately.
+    "$OBJCOPY" -O binary -j .text "$dir/$name.elf" "$dir/text.bin"
+    "$OBJCOPY" -O binary -j .data "$dir/$name.elf" "$dir/data.bin"
+    "$OBJDUMP" -d "$dir/$name.elf" > "$dir/$name.dis"
+
+    # Join them: .data's flash copy (the flash driver's RAM code first) sits
+    # at __xb_data_load (from the link map). fm1-emu loads --bin at
+    # 0x02000000, so the XIP image gets the 0x120-byte header gap in front.
+    python3 - "$dir" "$name" <<'EOF'
 import re, sys
-out = sys.argv[1]
+out, name = sys.argv[1], sys.argv[2]
 text = open(f"{out}/text.bin", "rb").read()
 data = open(f"{out}/data.bin", "rb").read()
-m = re.search(r"0x([0-9a-fA-F]+)\s+__xb_data_load\b", open(f"{out}/xebec.map").read())
+m = re.search(r"0x([0-9a-fA-F]+)\s+__xb_data_load\b", open(f"{out}/{name}.map").read())
 if not m:
-    sys.exit("__xb_data_load not found in xebec.map")
+    sys.exit("__xb_data_load not found in the link map")
 data_off = int(m.group(1), 16) - 0x02000120
 if data_off < len(text):
     sys.exit(f".data load address overlaps .text ({data_off:#x} < {len(text):#x})")
 app = text + bytes(data_off - len(text)) + data
-open(f"{out}/xebec_app.bin", "wb").write(app)
-open(f"{out}/xebec_xip.bin", "wb").write(bytes(0x120) + app)
-print(f"xebec_app.bin: {len(app)} bytes (text {len(text)}, data {len(data)})")
+open(f"{out}/{name}_app.bin", "wb").write(app)
+open(f"{out}/{name}_xip.bin", "wb").write(bytes(0x120) + app)
+print(f"{name}_app.bin: {len(app)} bytes (text {len(text)}, data {len(data)})")
 EOF
+    rm -f "$dir/text.bin" "$dir/data.bin"
+}
+
+image "$OUT" xebec "$OUT/obj/main.o"
+# The flash driver test, for fm1-emu only (tools/check_flash_test.py).
+image "$OUT/test" xebec_flashtest "$OUT/test/obj/flash_test.o"
