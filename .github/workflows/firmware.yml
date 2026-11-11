@@ -23,7 +23,7 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: JieLi toolchain (clang for pi32v2)
         run: |
@@ -39,7 +39,7 @@ jobs:
           "$JIELI_TOOLCHAIN/common/bin/objdump" -h build/xebec.elf || true
 
       - name: fm1-emu (pinned)
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         id: emu-cache
         with:
           path: emu/target/release/fm1-emu
@@ -59,7 +59,7 @@ jobs:
               --ms 2000 --snap 1900 --steps 2000000000 --quiet | tail -n 20
           python3 tools/check_screen.py work/lcd_1900.bmp 008080
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: xebec-build
