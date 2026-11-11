@@ -12,9 +12,7 @@ Early days. Xebec does not run on the FM-1 yet, and there is nothing to install 
 
 ## The road ahead
 
-1. A bare build that boots on the FM-1: screen on, keys read, a single sine on the audio out.
-2. Its own update path, so Xebec installs and returns to the official firmware safely.
-3. The sound engine and the interface on top.
+From a bare boot to the update path, the panel, audio, USB and MIDI, dual core and finally the sound engine: see the [roadmap](docs/ROADMAP.md).
 
 ## License
 
