@@ -121,3 +121,17 @@ void xb_lcd_fill(unsigned x, unsigned y, unsigned w, unsigned h, uint16_t rgb565
     for (i = 0; i < h; i++)
         lcd_data(row_buf, w * 2u);
 }
+
+void xb_lcd_blit(unsigned x, unsigned y, unsigned w, unsigned h, const uint16_t *wire)
+{
+    unsigned i;
+
+    if (x >= XB_LCD_W || y >= XB_LCD_H || w == 0 || h == 0 ||
+        w > XB_LCD_W - x || h > XB_LCD_H - y)
+        return;
+
+    lcd_window(x, y, x + w - 1, y + h - 1);
+    /* One row per DMA transfer, the same size the fill uses. */
+    for (i = 0; i < h; i++)
+        lcd_data(wire + i * w, w * 2u);
+}

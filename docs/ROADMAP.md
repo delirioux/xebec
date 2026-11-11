@@ -12,6 +12,7 @@ Status: ✅ done · 🔨 in progress · ⬜ to do
 - ✅ Own start-up code, memory layout and C runtime
 - ✅ Own display driver (ST7789V on SPI1)
 - ✅ The screen shows one colour, checked pixel for pixel in fm1-emu on every build
+- 🔨 Boot test screen: name, version and build code, then the boot checks line by line (display, RAM, core 0), in Xebec's own font
 
 *Proven in fm1-emu. The first check on a real FM-1 comes with milestone 2.*
 

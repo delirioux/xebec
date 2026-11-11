@@ -30,6 +30,10 @@ CFLAGS="-target pi32v2 -mcpu=r3 -mfprev1 -O2 -ffreestanding -nostdlib -fno-built
         -ffunction-sections -fdata-sections -Wall -Wextra -Werror \
         -I$ROOT/firmware/board -I$ROOT/firmware/src"
 
+# Build code shown on the boot screen: the commit, upper case (the font has no lower case).
+BUILD="$(git -C "$ROOT" rev-parse --short=7 HEAD 2>/dev/null | tr 'a-f' 'A-F' || true)"
+[ -n "$BUILD" ] || BUILD="LOCAL"
+
 rm -rf "$OUT"
 mkdir -p "$OUT/obj"
 
@@ -38,7 +42,7 @@ OBJS=""
 OBJS="$OBJS $OUT/obj/start.o"
 for src in "$ROOT"/firmware/boot/*.c "$ROOT"/firmware/board/*.c "$ROOT"/firmware/src/*.c; do
     obj="$OUT/obj/$(basename "$src" .c).o"
-    "$CC" $CFLAGS -c "$src" -o "$obj"
+    "$CC" $CFLAGS "-DXB_BUILD=\"$BUILD\"" -c "$src" -o "$obj"
     OBJS="$OBJS $obj"
 done
 

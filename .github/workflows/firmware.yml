@@ -52,12 +52,12 @@ jobs:
           git -C emu checkout "$FM1_EMU_COMMIT"
           cargo build --release -p fm1-emu --manifest-path emu/Cargo.toml
 
-      - name: Run in fm1-emu and check the screen
+      - name: Run in fm1-emu and check the boot screen
         run: |
           mkdir -p work
           emu/target/release/fm1-emu --bin build/xebec_xip.bin --entry 0x02000120 \
               --ms 2000 --snap 1900 --steps 2000000000 --quiet | tail -n 20
-          python3 tools/check_screen.py work/lcd_1900.bmp 008080
+          python3 tools/check_boot_screen.py work/lcd_1900.bmp "$(git rev-parse --short=7 HEAD | tr 'a-f' 'A-F')"
 
       - uses: actions/upload-artifact@v7
         if: always()
