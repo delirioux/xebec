@@ -45,13 +45,27 @@ done
 "$LD" -T "$ROOT/firmware/boot/xebec.ld" --gc-sections -Map "$OUT/xebec.map" \
     $OBJS -o "$OUT/xebec.elf"
 
-"$OBJCOPY" -O binary "$OUT/xebec.elf" "$OUT/xebec_app.bin"
+# JieLi's objcopy takes exactly one -j per call: code and data separately.
+"$OBJCOPY" -O binary -j .text "$OUT/xebec.elf" "$OUT/text.bin"
+"$OBJCOPY" -O binary -j .data "$OUT/xebec.elf" "$OUT/data.bin"
 "$OBJDUMP" -d "$OUT/xebec.elf" > "$OUT/xebec.dis"
 
-# fm1-emu loads --bin at 0x02000000: pad the 0x120-byte header gap.
-python3 - "$OUT/xebec_app.bin" "$OUT/xebec_xip.bin" <<'EOF'
-import sys
-app = open(sys.argv[1], "rb").read()
-open(sys.argv[2], "wb").write(bytes(0x120) + app)
-print(f"xebec_app.bin: {len(app)} bytes")
+# Join them: .data's flash copy sits at __xb_data_load (from the link map).
+# fm1-emu loads --bin at 0x02000000, so the XIP image gets the 0x120-byte
+# header gap in front.
+python3 - "$OUT" <<'EOF'
+import re, sys
+out = sys.argv[1]
+text = open(f"{out}/text.bin", "rb").read()
+data = open(f"{out}/data.bin", "rb").read()
+m = re.search(r"0x([0-9a-fA-F]+)\s+__xb_data_load\b", open(f"{out}/xebec.map").read())
+if not m:
+    sys.exit("__xb_data_load not found in xebec.map")
+data_off = int(m.group(1), 16) - 0x02000120
+if data_off < len(text):
+    sys.exit(f".data load address overlaps .text ({data_off:#x} < {len(text):#x})")
+app = text + bytes(data_off - len(text)) + data
+open(f"{out}/xebec_app.bin", "wb").write(app)
+open(f"{out}/xebec_xip.bin", "wb").write(bytes(0x120) + app)
+print(f"xebec_app.bin: {len(app)} bytes (text {len(text)}, data {len(data)})")
 EOF
