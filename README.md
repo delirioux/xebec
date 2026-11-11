@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/logo.png" alt="Xebec" width="480"></p>
+
 # Xebec
 
 Built from scratch for the M-VAVE FM-1, fast and lean, no borrowed planks.
