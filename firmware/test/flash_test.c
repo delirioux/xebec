@@ -57,7 +57,9 @@ static int all(const uint8_t *p, uint32_t n, uint8_t v)
     return 1;
 }
 
-void __attribute__((noinline)) xb_flash_test_park(void)
+/* The checker stops the trace here, so it must stay a function of its own:
+ * reached through a pointer, it is neither inlined nor dropped by the linker. */
+void __attribute__((noinline, used)) xb_flash_test_park(void)
 {
     for (;;)
         ;
@@ -114,5 +116,8 @@ void xb_main(void)
     xb_flash_test.ram_calls = xb_flash_ram_calls;
     xb_flash_test.magic = 0x54464258u;   /* 'XBFT' */
     xb_flash_test.done = (xb_flash_test.passed == (1u << STEPS) - 1u) ? 1u : 2u;
-    xb_flash_test_park();
+    {
+        void (*volatile park)(void) = xb_flash_test_park;
+        park();
+    }
 }
