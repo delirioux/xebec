@@ -3,8 +3,8 @@
  * Copyright (C) 2026 delirioux
  * Xebec - display driver (ST7789V, 240 x 240, RGB565).
  */
-#ifndef XB_LCD_H
-#define XB_LCD_H
+#ifndef XB_LCD_DRIVER_H
+#define XB_LCD_DRIVER_H
 
 #include <stdint.h>
 
