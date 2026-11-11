@@ -11,6 +11,7 @@
 #   xebec_xip.bin    the same, padded to start at 0x02000000 (for fm1-emu --bin)
 #   xebec.dis        disassembly
 #   xebec.map        link map
+#   xebec.fwsc       the update package for the FM-1 (tools/package.py)
 # and in build/test/ the same for xebec_flashtest, the flash driver test
 # image (firmware/test/flash_test.c in place of main.c; fm1-emu only).
 set -eu
@@ -97,5 +98,7 @@ EOF
 }
 
 image "$OUT" xebec "$OUT/obj/main.o"
+# The update package: M-VAVE's stock package with Xebec in the app slot.
+python3 "$ROOT/tools/package.py" "$OUT/xebec_app.bin" "$OUT/xebec.fwsc"
 # The flash driver test, for fm1-emu only (tools/check_flash_test.py).
 image "$OUT/test" xebec_flashtest "$OUT/test/obj/flash_test.o"

@@ -20,7 +20,7 @@ From a bare boot to the update path, the panel, audio, USB and MIDI, dual core a
 
 Xebec is free software under the GNU General Public License, version 3 only (GPL-3.0-only); see [LICENSE](LICENSE).
 
-Xebec carries one file that is not its own: M-VAVE's update loader for the FM-1, unchanged, under the Apache License 2.0. Xebec stores and starts it but does not link it; see [vendor/m-vave](vendor/m-vave/README.md).
+Xebec carries a few files that are not its own, all M-VAVE's, unchanged, under the Apache License 2.0: the update loader, which Xebec stores and starts but does not link, and the boot loader and configuration in Xebec's update package; see [vendor/m-vave](vendor/m-vave/README.md).
 
 ---
 

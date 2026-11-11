@@ -11,10 +11,11 @@
  *   area + 0x0000   32-byte file head "LOADER.BIN", written last
  *   area + 0x0020   the loader (ota.bin without its own 32-byte head)
  *   area + 0x4F00   kept free for the update record's flash copy
- * The area is the start of the flash driver's write window: the first
- * 128 KiB boundary past Xebec's image, as the official firmware places it.
- * The layout and the head are the ones Felucca writes for the same loader,
- * proven on FM-1 units.
+ * The area is flash 0xE0000, the flash driver's whole write window: past
+ * the update package (0 to 0x93000) on a 128 KiB boundary, as the official
+ * firmware places its loader, and the very place Felucca stages the same
+ * loader. Place, layout, head and record are byte for byte what Felucca
+ * writes, proven on FM-1 units.
  */
 #ifndef XB_OTA_STAGE_H
 #define XB_OTA_STAGE_H

@@ -3,7 +3,7 @@
  * Copyright (C) 2026 delirioux
  *
  * Xebec - flash driver and loader staging test image, for fm1-emu only
- * (never for an FM-1: it erases and writes the start of the write window).
+ * (never for an FM-1: it erases and writes the write window).
  *
  * Built next to the firmware from the same driver code, with this file in
  * place of main.c. Runs every step once, records the outcome in

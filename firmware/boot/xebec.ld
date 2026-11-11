@@ -47,11 +47,14 @@ SECTIONS
     __xb_data_load = LOADADDR(.data);
     __xb_ram_code_load = LOADADDR(.data);
 
-    /* The flash write window starts at the first 128 KiB boundary past
-     * Xebec's image (board/flash.h); the end is XB_FLASH_SAFE_HI. */
+    /* The image must fit the app slot of the update package (tools/package.py:
+     * 0x8DFBC bytes from XIP 0x02000120, as in M-VAVE's stock layout). */
     __xb_image_end = LOADADDR(.data) + SIZEOF(.data);
-    __xb_flash_safe_lo = ALIGN(__xb_image_end - 0x02000000 + 0x4000, 0x20000);
-    ASSERT(__xb_flash_safe_lo < 0xE0000, "Xebec: no room left for the flash write window")
+    ASSERT(__xb_image_end <= 0x02000120 + 0x8DFBC, "Xebec: the image does not fit the package's app slot")
+
+    /* The flash write window starts here (a flash offset; board/flash.h):
+     * the update staging area, the same as Felucca's. */
+    __xb_flash_safe_lo = 0xE0000;
 
     .bss (NOLOAD) :
     {

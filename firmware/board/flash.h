@@ -10,10 +10,12 @@
  *
  * Safety:
  *  - erase and program only inside the write window, checked in RAM right
- *    before the flash is touched: from the first 128 KiB boundary past
- *    Xebec's own image up to XB_FLASH_SAFE_HI. Below it are M-VAVE's boot
- *    loader, the flash head and Xebec itself; above it the areas the
- *    official firmware keeps (OTA staging, VM, user patches, settings).
+ *    before the flash is touched: flash 0xE0000 up to XB_FLASH_SAFE_HI, the
+ *    update staging area and nothing else (ota_stage.h). Below it are the
+ *    boot loader, the head and Xebec's package (0 to 0x93000) and free
+ *    space; above it the official firmware's areas (BTIF 0xE9000, user
+ *    patches 0xEA000, settings, key_mac 0xFF000). It is the same 20 KiB
+ *    where Felucca stages the update loader.
  *  - only on a known flash chip (JEDEC ID checked before every erase and
  *    program); write enable is checked before every command and dropped
  *    again after an error.
@@ -32,7 +34,7 @@
 #define XB_FLASH_SIZE     0x100000u
 #define XB_FLASH_SECTOR   0x1000u
 #define XB_FLASH_PAGE     0x100u
-#define XB_FLASH_SAFE_HI  0xE0000u
+#define XB_FLASH_SAFE_HI  0xE5000u
 
 /* The two 1 MiB parts found in FM-1 units: Puya (85 60 14) and, in newer
  * units, UC25HQ80 (B3 60 14). */

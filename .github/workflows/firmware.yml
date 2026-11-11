@@ -8,6 +8,8 @@
 #    run the flash driver and loader staging test image in fm1-emu.
 # 4. Power the firmware on in fm1-emu with the update keys held, with one of
 #    them, and over a leftover staging, and check what reaches the flash.
+# 5. Check the update package against M-VAVE's stock package, byte for byte,
+#    and boot it in fm1-emu as the FM-1's boot loader would.
 # The run's artifact "xebec-build" holds the app image, the disassembly,
 # the link map and the screen capture.
 name: Firmware
@@ -22,6 +24,8 @@ permissions:
 
 env:
   FM1_EMU_COMMIT: 3e3fb27df91239fe0e7c5bbf82b14c20ad7dd62a
+  # M-VAVE's open SDK, for the stock package the update package is checked against
+  FM1_OPEN_COMMIT: 4c7496daac04a95ff10d1afdcc8f9ead2dbabc41
 
 jobs:
   build:
@@ -74,11 +78,25 @@ jobs:
       - name: Update path in fm1-emu (update keys, one key, leftover staging)
         run: python3 tools/check_update_path.py emu/target/release/fm1-emu build/xebec_xip.bin build/xebec.elf work
 
+      - name: Update package against M-VAVE's stock package
+        run: |
+          mkdir -p work
+          curl -fsSL -o work/FM-1_015.fwsc \
+              "https://raw.githubusercontent.com/m-vave/fm1_open/$FM1_OPEN_COMMIT/sdk/firmware/FM-1_015.fwsc"
+          python3 tools/check_package.py build/xebec.fwsc build/xebec_app.bin build/xebec.elf --stock work/FM-1_015.fwsc
+
+      - name: Boot the update package in fm1-emu and check the boot screen
+        run: |
+          emu/target/release/fm1-emu --fwsc build/xebec.fwsc --ms 2000 --snap 1900 --steps 2000000000 --quiet | tail -n 20
+          mv work/lcd_1900.bmp work/package_lcd_1900.bmp
+          python3 tools/check_boot_screen.py work/package_lcd_1900.bmp "$(git rev-parse --short=7 HEAD | tr 'a-f' 'A-F')"
+
       - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: xebec-build
           path: |
+            build/xebec.fwsc
             build/xebec_app.bin
             build/xebec_xip.bin
             build/xebec.dis
