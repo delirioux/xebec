@@ -16,6 +16,10 @@ Early days. Xebec does not run on the FM-1 yet, and there is nothing to install 
 2. Its own update path, so Xebec installs and returns to the official firmware safely.
 3. The sound engine and the interface on top.
 
+## License
+
+Xebec is free software under the GNU General Public License, version 3 only (GPL-3.0-only); see [LICENSE](LICENSE).
+
 ---
 
 M-VAVE and FM-1 are trademarks of their respective owners; Xebec is not affiliated with or endorsed by them.
