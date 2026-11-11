@@ -16,12 +16,17 @@ Status: ✅ done · 🔨 in progress · ⬜ to do
 
 *Proven in fm1-emu. The first check on a real FM-1 comes with milestone 2.*
 
-### 2. Update path ⬜
+### 2. Update path 🔨
 
-- ⬜ Own update package for the FM-1 (`.fwsc`)
-- ⬜ Xebec answers the FM-1 update protocol over USB-MIDI, so it can overwrite itself
+- ✅ Hand-over to the OTA loader worked out: an 80-byte update record at RAM `0x01C7FD88` (CRC, type, status `0x5A00`, magic `0x5440`, name `ota-FM-1_0xx`, loader location and length), then a soft reset
+- ✅ Where the loader goes: the official app stages it in free flash after its own image, on a 128 KiB boundary, written in 4 KiB blocks, clear of the user area
+- ⬜ Flash driver that runs from RAM (erase and write while the code itself lives in flash)
+- ⬜ Xebec carries M-VAVE's OTA loader (Apache-2.0) and stages it the same way
+- ⬜ Key held at power-on: stage the loader, write the record, restart into the loader
+- ⬜ Own update package for the FM-1 (`.fwsc`), with M-VAVE's boot loader, OTA loader and config byte for byte unchanged
+- ⬜ First install on a real FM-1, display bring-up confirmed
 - ⬜ Way back to the official firmware, tested
-- ⬜ Display bring-up confirmed on a real FM-1
+- ⬜ Later: answer the update protocol over USB-MIDI, so installers can update Xebec without a key held
 
 *The first milestone that goes onto a real FM-1.*
 
