@@ -3,15 +3,54 @@
 Where Xebec is going, in order. Everything is built from scratch on the
 chip's own SDK.
 
+Status: ✅ done · 🔨 in progress · ⬜ to do
+
 ## Milestones
 
-1. **Bare boot** — the display comes up and shows one colour. *Runs in fm1-emu; not yet on hardware.*
-2. **Update path** — Xebec packages itself as an FM-1 update, installs, overwrites itself and returns to the official firmware safely. *First milestone that goes onto a real FM-1.*
-3. **Panel** — keys, buttons, encoders, MASTER pot and LEDs read and driven.
-4. **Audio out** — a single sine on the audio output.
-5. **USB and MIDI** — USB-MIDI, USB audio and the TRS MIDI input.
-6. **Dual core** — the second core renders voices; Xebec falls back to one core on units where the second core is unreliable.
-7. **Sound engine and interface** — what Xebec actually plays, on top.
+### 1. Bare boot ✅
+
+- ✅ Own start-up code, memory layout and C runtime
+- ✅ Own display driver (ST7789V on SPI1)
+- ✅ The screen shows one colour, checked pixel for pixel in fm1-emu on every build
+
+*Proven in fm1-emu. The first check on a real FM-1 comes with milestone 2.*
+
+### 2. Update path ⬜
+
+- ⬜ Own update package for the FM-1 (`.fwsc`)
+- ⬜ Xebec answers the FM-1 update protocol over USB-MIDI, so it can overwrite itself
+- ⬜ Way back to the official firmware, tested
+- ⬜ Display bring-up confirmed on a real FM-1
+
+*The first milestone that goes onto a real FM-1.*
+
+### 3. Panel ⬜
+
+- ⬜ Key and button matrix (27 keys, 14 buttons)
+- ⬜ The seven encoders
+- ⬜ MASTER pot and battery level
+- ⬜ Key and button LEDs
+
+### 4. Audio out ⬜
+
+- ⬜ Audio output to the FM-1's DAC
+- ⬜ A single sine, clean and steady
+
+### 5. USB and MIDI ⬜
+
+- ⬜ USB-MIDI in and out
+- ⬜ USB audio
+- ⬜ TRS MIDI input
+
+### 6. Dual core ⬜
+
+- ⬜ Start the second core
+- ⬜ Second core renders voices, first core runs everything else
+- ⬜ Fallback to one core on units where the second core is unreliable
+
+### 7. Sound engine and interface ⬜
+
+- ⬜ What Xebec actually plays, and how it is played
 
 ## Later
 
