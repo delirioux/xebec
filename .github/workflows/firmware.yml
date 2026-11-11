@@ -1,0 +1,70 @@
+# Xebec - build the firmware on GitHub's Linux runners and check it in fm1-emu.
+#
+# 1. Fetch JieLi's toolchain from JieLi's own server and build the app image.
+# 2. Build fm1-emu (joakimeriksson/fm1-emu, MIT) at a pinned commit, run the
+#    image in it and check the screen it draws.
+# The run's artifact "xebec-build" holds the app image, the disassembly,
+# the link map and the screen capture.
+name: Firmware
+
+on:
+  push:
+    branches: [main, dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FM1_EMU_COMMIT: 3e3fb27df91239fe0e7c5bbf82b14c20ad7dd62a
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: JieLi toolchain (clang for pi32v2)
+        run: |
+          sh tools/get_toolchain.sh "$HOME/.jieli"
+          echo "JIELI_TOOLCHAIN=$HOME/.jieli/current" >> "$GITHUB_ENV"
+
+      - name: Build Xebec
+        run: sh tools/build.sh
+
+      - name: Size
+        run: |
+          ls -l build/xebec_app.bin
+          "$JIELI_TOOLCHAIN/common/bin/objdump" -h build/xebec.elf || true
+
+      - name: fm1-emu (pinned)
+        uses: actions/cache@v4
+        id: emu-cache
+        with:
+          path: emu/target/release/fm1-emu
+          key: fm1-emu-${{ env.FM1_EMU_COMMIT }}
+
+      - name: Build fm1-emu
+        if: steps.emu-cache.outputs.cache-hit != 'true'
+        run: |
+          git clone https://github.com/joakimeriksson/fm1-emu emu
+          git -C emu checkout "$FM1_EMU_COMMIT"
+          cargo build --release -p fm1-emu --manifest-path emu/Cargo.toml
+
+      - name: Run in fm1-emu and check the screen
+        run: |
+          mkdir -p work
+          emu/target/release/fm1-emu --bin build/xebec_xip.bin --entry 0x02000120 \
+              --ms 2000 --snap 1900 --steps 2000000000 --quiet | tail -n 20
+          python3 tools/check_screen.py work/lcd_1900.bmp 008080
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: xebec-build
+          path: |
+            build/xebec_app.bin
+            build/xebec_xip.bin
+            build/xebec.dis
+            build/xebec.map
+            work/*.bmp
