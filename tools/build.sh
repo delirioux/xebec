@@ -45,7 +45,7 @@ done
 "$LD" -T "$ROOT/firmware/boot/xebec.ld" --gc-sections -Map "$OUT/xebec.map" \
     $OBJS -o "$OUT/xebec.elf"
 
-"$OBJCOPY" -O binary -j .text -j .data "$OUT/xebec.elf" "$OUT/xebec_app.bin"
+"$OBJCOPY" -O binary "$OUT/xebec.elf" "$OUT/xebec_app.bin"
 "$OBJDUMP" -d "$OUT/xebec.elf" > "$OUT/xebec.dis"
 
 # fm1-emu loads --bin at 0x02000000: pad the 0x120-byte header gap.
