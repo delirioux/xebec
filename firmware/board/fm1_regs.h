@@ -15,12 +15,18 @@
 
 #define XB_REG32(addr) (*(volatile uint32_t *)(uintptr_t)(addr))
 
-/* GPIO ports A..H, 0x40 apart: OUT +0x00, DIR +0x08 (1 = input). */
+/* GPIO ports A..H, 0x40 apart: OUT +0x00, IN +0x04, DIR +0x08 (1 = input),
+ * DIE +0x0C (digital input on), PU +0x10 / PD +0x14 (pull-up / pull-down). */
 #define XB_PORT_BASE(n)   (0x50000u + 0x40u * (n))
 #define XB_PORT_A         0
+#define XB_PORT_B         1
 #define XB_PORT_C         2
 #define XB_PORT_OUT(n)    XB_REG32(XB_PORT_BASE(n) + 0x00u)
+#define XB_PORT_IN(n)     XB_REG32(XB_PORT_BASE(n) + 0x04u)
 #define XB_PORT_DIR(n)    XB_REG32(XB_PORT_BASE(n) + 0x08u)
+#define XB_PORT_DIE(n)    XB_REG32(XB_PORT_BASE(n) + 0x0Cu)
+#define XB_PORT_PU(n)     XB_REG32(XB_PORT_BASE(n) + 0x10u)
+#define XB_PORT_PD(n)     XB_REG32(XB_PORT_BASE(n) + 0x14u)
 
 /* SPI1, the display bus: CON, BAUD, BUF (one byte), DMA address, DMA count. */
 #define XB_SPI1_CON       XB_REG32(0x11D00u)
@@ -38,6 +44,21 @@
 #define XB_LCD_SCK_PIN    9u   /* PC9 */
 #define XB_LCD_MOSI_PIN   10u  /* PC10 */
 #define XB_LCD_BL_PIN     2u   /* PA2, backlight, active low */
+
+/* Key matrix: 11 columns from two chained 74HC595s (PA4 SER, PA3 SRCLK,
+ * PA1 RCLK; a low output selects its column), 6 rows PA0, PA5..PA8, PB7
+ * with pull-ups (low = closed). Same wiring in M-VAVE's fm1_input.h,
+ * Felucca's input code and the fm1-emu panel model. */
+#define XB_SR_SER_PIN     4u   /* PA4 */
+#define XB_SR_CLK_PIN     3u   /* PA3 */
+#define XB_SR_LATCH_PIN   1u   /* PA1 */
+
+/* Chip reset (the update path): PWR_CON bit 4, as M-VAVE's update code does. */
+#define XB_PWR_CON        XB_REG32(0x10000u)
+#define XB_PWR_CON_RESET  (1u << 4)
+
+/* The update record the boot loader reads after a reset (112 bytes). */
+#define XB_UPDATE_RECORD_RAM 0x01C7FD88u
 
 /* The external NOR flash (1 MiB). Normally the SFC owns it and maps it at
  * XIP 0x02000000 (flash offset 0x4000 and up); to erase or program, the SFC

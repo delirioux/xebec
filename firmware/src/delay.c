@@ -16,3 +16,11 @@ void xb_delay_ms(unsigned ms)
         for (n = 0; n < XB_LOOPS_PER_MS; n++)
             ;
 }
+
+void xb_delay_us(unsigned us)
+{
+    volatile unsigned n = us * (XB_LOOPS_PER_MS / 1000u);
+
+    while (n--)
+        ;
+}

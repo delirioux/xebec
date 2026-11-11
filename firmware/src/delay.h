@@ -11,4 +11,7 @@
  * Good enough for start-up waits; real timing comes with the timers. */
 void xb_delay_ms(unsigned ms);
 
+/* The same, in microseconds. */
+void xb_delay_us(unsigned us);
+
 #endif

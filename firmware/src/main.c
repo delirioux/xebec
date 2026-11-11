@@ -7,9 +7,15 @@
  * The boot test: bring up the display, show who we are, then run the
  * boot checks one by one, each on its own line. If Xebec hangs, the last
  * line on screen shows where.
+ *
+ * OCT- and OCT+ held at power-on: update mode instead. Xebec stages
+ * M-VAVE's OTA loader and restarts into it (update.h).
  */
 #include "../board/lcd.h"
 #include "../board/flash.h"
+#include "../board/keys.h"
+#include "update.h"
+#include "delay.h"
 #include "text.h"
 #include "ramtest.h"
 #include "version.h"
@@ -57,6 +63,33 @@ static void check(const char *label, int ok)
     check_line++;
 }
 
+static void centred(unsigned y, const char *text)
+{
+    unsigned w = xb_text_width(text, 2);
+
+    xb_text_draw((XB_LCD_W - w) / 2u, y, text, 2, XB_COLOUR_TEXT, XB_COLOUR_SEA);
+}
+
+/* OCT- + OCT+ held: stage the loader, write the record, restart into it.
+ * On a failure nothing is left behind; the screen says so and Xebec stops
+ * there (power off and on to start normally). */
+static void update_mode(void)
+{
+    int rc;
+
+    check("UPDATE KEYS", 1);
+    rc = xb_update_prepare();
+    check("LOADER", rc == XB_FLASH_OK);
+    if (rc != XB_FLASH_OK) {
+        centred(208u, "UPDATE FAILED");
+        for (;;)
+            ;
+    }
+    centred(208u, "RESTART");
+    xb_delay_ms(300);
+    xb_update_restart();
+}
+
 void xb_main(void)
 {
     unsigned w;
@@ -75,12 +108,26 @@ void xb_main(void)
 
     /* Reaching this line means start-up, the C runtime and the display work. */
     check("DISPLAY", 1);
+
+    xb_keys_init();
+    if (xb_keys_update_held())
+        update_mode();
+
     check("RAM 64K", xb_ramtest());
     check("CORE 0", 1);
-    check("FLASH", flash_check());
+    if (flash_check()) {
+        int rc;
 
-    w = xb_text_width("READY", 2);
-    xb_text_draw((XB_LCD_W - w) / 2u, 208u, "READY", 2, XB_COLOUR_TEXT, XB_COLOUR_SEA);
+        check("FLASH", 1);
+        /* Only shown when an earlier update left something to clear. */
+        rc = xb_update_cleanup();
+        if (rc)
+            check("CLEANUP", rc > 0);
+    } else {
+        check("FLASH", 0);
+    }
+
+    centred(208u, "READY");
 
     for (;;)
         ;

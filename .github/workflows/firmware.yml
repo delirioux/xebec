@@ -6,6 +6,8 @@
 #    image in it and check the screen it draws.
 # 3. Check that the flash driver's RAM code never reaches into flash, and
 #    run the flash driver and loader staging test image in fm1-emu.
+# 4. Power the firmware on in fm1-emu with the update keys held, with one of
+#    them, and over a leftover staging, and check what reaches the flash.
 # The run's artifact "xebec-build" holds the app image, the disassembly,
 # the link map and the screen capture.
 name: Firmware
@@ -68,6 +70,9 @@ jobs:
           emu/target/release/fm1-emu --bin build/xebec_xip.bin --entry 0x02000120 \
               --ms 2000 --snap 1900 --steps 2000000000 --quiet | tail -n 20
           python3 tools/check_boot_screen.py work/lcd_1900.bmp "$(git rev-parse --short=7 HEAD | tr 'a-f' 'A-F')"
+
+      - name: Update path in fm1-emu (update keys, one key, leftover staging)
+        run: python3 tools/check_update_path.py emu/target/release/fm1-emu build/xebec_xip.bin build/xebec.elf work
 
       - uses: actions/upload-artifact@v7
         if: always()
