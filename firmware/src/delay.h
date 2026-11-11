@@ -1,4 +1,6 @@
-/*
+/* SPDX-License-Identifier: GPL-3.0-only
+ *
+ * Copyright (C) 2026 delirioux
  * Xebec - coarse busy-wait delays.
  */
 #ifndef XB_DELAY_H

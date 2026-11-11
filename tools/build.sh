@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 delirioux
 # Xebec - build the firmware app image.
 #
 #   JIELI_TOOLCHAIN=~/.jieli/current tools/build.sh

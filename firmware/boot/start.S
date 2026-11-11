@@ -1,4 +1,6 @@
-/*
+/* SPDX-License-Identifier: GPL-3.0-only
+ *
+ * Copyright (C) 2026 delirioux
  * Xebec - reset entry for the FM-1 app area.
  *
  * The second-stage loader maps the app at XIP 0x02000000 and enters it

@@ -1,4 +1,6 @@
-/*
+/* SPDX-License-Identifier: GPL-3.0-only
+ *
+ * Copyright (C) 2026 delirioux
  * Xebec - C runtime start-up: copy initialised data to RAM, clear .bss.
  * Runs before anything else, with no .data or .bss available yet.
  */

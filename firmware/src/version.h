@@ -1,4 +1,6 @@
-/*
+/* SPDX-License-Identifier: GPL-3.0-only
+ *
+ * Copyright (C) 2026 delirioux
  * Xebec - version.
  */
 #ifndef XB_VERSION_H

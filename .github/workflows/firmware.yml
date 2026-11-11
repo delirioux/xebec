@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-only
 # Xebec - build the firmware on GitHub's Linux runners and check it in fm1-emu.
 #
 # 1. Fetch JieLi's toolchain from JieLi's own server and build the app image.

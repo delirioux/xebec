@@ -1,4 +1,6 @@
-/*
+/* SPDX-License-Identifier: GPL-3.0-only
+ *
+ * Copyright (C) 2026 delirioux
  * Xebec - FM-1 (JieLi AC791N / WL82) registers and board wiring.
  *
  * Addresses and pins are hardware facts collected from public sources:

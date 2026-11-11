@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 delirioux
 # Xebec - fetch JieLi's Linux toolchain (clang for pi32v2) from JieLi's own
 # package server and point $DEST/current at it.
 #

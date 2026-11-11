@@ -1,4 +1,6 @@
-/*
+/* SPDX-License-Identifier: GPL-3.0-only
+ *
+ * Copyright (C) 2026 delirioux
  * Xebec - firmware for the M-VAVE FM-1, built from scratch.
  *
  * Milestone 1, the bare boot: bring up the display and paint it one

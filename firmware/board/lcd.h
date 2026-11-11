@@ -1,4 +1,6 @@
-/*
+/* SPDX-License-Identifier: GPL-3.0-only
+ *
+ * Copyright (C) 2026 delirioux
  * Xebec - display driver (ST7789V, 240 x 240, RGB565).
  */
 #ifndef XB_LCD_H

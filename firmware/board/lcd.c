@@ -1,4 +1,6 @@
-/*
+/* SPDX-License-Identifier: GPL-3.0-only
+ *
+ * Copyright (C) 2026 delirioux
  * Xebec - display driver (ST7789V on SPI1).
  *
  * Commands go out one byte at a time with D/C low; pixel data goes out

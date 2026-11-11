@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 delirioux
 """Xebec - check a screen capture from fm1-emu (a 240 x 240, 24-bit BMP).
 
     tools/check_screen.py work/lcd.bmp RRGGBB
