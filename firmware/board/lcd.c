@@ -6,9 +6,8 @@
  * Commands go out one byte at a time with D/C low; pixel data goes out
  * by DMA with D/C high. Pixels travel big-endian (high byte first).
  *
- * Status: runs in fm1-emu. Not yet checked on a real FM-1: before the
- * first hardware build, confirm the SPI1 pin routing to PC9/PC10, the
- * SPI1 control bits and the panel timing on the bench.
+ * Pin routing and SPI1 set-up as M-VAVE's SDK and Felucca have them; the
+ * first hardware test (0.0.4) showed both are needed.
  */
 #include "lcd.h"
 #include "fm1_regs.h"
@@ -78,14 +77,16 @@ static void lcd_window(unsigned x0, unsigned y0, unsigned x1, unsigned y1)
 
 void xb_lcd_init(void)
 {
-    /* Display lines as outputs, chip select idle high. */
+    /* Display lines as outputs: chip select idle high, the rest low. */
     XB_PORT_OUT(XB_PORT_C) |= CS_BIT;
+    XB_PORT_OUT(XB_PORT_C) &= ~((1u << XB_LCD_DC_PIN) | (1u << XB_LCD_SCK_PIN) | (1u << XB_LCD_MOSI_PIN));
     XB_PORT_DIR(XB_PORT_C) &= ~((1u << XB_LCD_CS_PIN) | (1u << XB_LCD_DC_PIN) |
                                 (1u << XB_LCD_SCK_PIN) | (1u << XB_LCD_MOSI_PIN));
 
-    /* SPI1 at about 12 MHz. */
+    /* SPI1 onto PC9/PC10, master, about 12 MHz. */
+    XB_IOMAP_CON1 |= XB_IOMAP_SPI1_LCD;
     XB_SPI1_BAUD = 4;
-    XB_SPI1_CON |= XB_SPI_CON_EN;
+    XB_SPI1_CON = XB_SPI_CON_EN | XB_SPI_CON_MASTER | XB_SPI_CON_PCLR;
 
     lcd_cmd(0x01);                         /* SWRESET */
     xb_delay_ms(150);

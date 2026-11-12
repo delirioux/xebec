@@ -35,6 +35,7 @@
 #define XB_SPI1_ADR       XB_REG32(0x11D0Cu)
 #define XB_SPI1_CNT       XB_REG32(0x11D10u)
 #define XB_SPI_CON_EN     (1u << 0)
+#define XB_SPI_CON_MASTER (1u << 5)
 #define XB_SPI_CON_PCLR   (1u << 14)   /* write 1: clear the done flag */
 #define XB_SPI_CON_PND    (1u << 15)   /* read: transfer done */
 
@@ -44,6 +45,8 @@
 #define XB_LCD_SCK_PIN    9u   /* PC9 */
 #define XB_LCD_MOSI_PIN   10u  /* PC10 */
 #define XB_LCD_BL_PIN     2u   /* PA2, backlight, active low */
+#define XB_IOMAP_CON1     XB_REG32(0x51020u)
+#define XB_IOMAP_SPI1_LCD (1u << 4)   /* SPI1 drives PC9 (clock) and PC10 (data) */
 
 /* Key matrix: 11 columns from two chained 74HC595s (PA4 SER, PA3 SRCLK,
  * PA1 RCLK; a low output selects its column), 6 rows PA0, PA5..PA8, PB7
