@@ -30,7 +30,7 @@ done
 
 # r3 with the FPU: floats run in hardware, never through soft-float routines.
 CFLAGS="-target pi32v2 -mcpu=r3 -mfprev1 -O2 -ffreestanding -nostdlib -fno-builtin \
-        -ffunction-sections -fdata-sections -Wall -Wextra -Werror \
+        -ffunction-sections -fdata-sections -Wall -Wextra -Wdouble-promotion -Werror \
         -I$ROOT/firmware/board -I$ROOT/firmware/src"
 
 # Build code shown on the boot screen: the commit, upper case (the font has no lower case).

@@ -38,6 +38,8 @@ Status: ✅ done · 🔨 in progress · ⬜ to do
   - M-VAVE's stock package (FM-1_015) with Xebec in the app slot: the same head, layout and files, only the slot and its two CRCs differ; no factory patches, so an install leaves the FM-1's patches alone
   - Identity `FM-1_47932320`, in the range of Xebec's sister firmwares
   - Every build checks it against M-VAVE's package fetched from M-VAVE's repository, checks the write window (`0xE0000`–`0xE5000`, inside VM, past the package, clear of BTIF, the patches and key_mac), and boots the package in fm1-emu to the boot screen
+- ✅ Installer page (GitHub Pages, `dev/`): Web MIDI, both update steps, only packages that keep M-VAVE's boot loader and loader; also puts M-VAVE's stock firmware back from update mode
+  - Tested against Manta's own update code: it accepts Xebec's package and stages the loader byte for byte as Xebec's update mode does, and refuses a package whose head does not match the FM-1's without writing anything
 - ⬜ First install on a real FM-1, display bring-up confirmed
 - ⬜ Way back to the official firmware, tested
 - ⬜ Later: answer the update protocol over USB-MIDI, so installers can update Xebec without a key held

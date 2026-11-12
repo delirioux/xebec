@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Xebec installer</title>
+<style>
+  :root { --bg: #0b2b2b; --panel: #103a3a; --text: #f2f7f7; --dim: #a9c4c4; --sea: #2fb3b3; --warn: #ffcc66; --bad: #ff7a7a; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 system-ui, sans-serif; }
+  main { max-width: 640px; margin: 0 auto; padding: 24px 16px 48px; }
+  header { text-align: center; }
+  header img { width: min(320px, 80%); background: #fff; border-radius: 8px; padding: 8px; }
+  h1 { font-size: 1.4rem; margin: 16px 0 4px; }
+  h2 { font-size: 1.1rem; margin: 0 0 8px; }
+  .build { color: var(--dim); font-size: .9rem; }
+  section { background: var(--panel); border-radius: 8px; padding: 16px; margin-top: 16px; }
+  .warn { border-left: 4px solid var(--warn); }
+  button { font: inherit; background: var(--sea); color: #002; border: 0; border-radius: 6px; padding: 10px 18px; cursor: pointer; }
+  button:disabled { opacity: .5; cursor: default; }
+  progress { width: 100%; height: 12px; margin-top: 12px; }
+  #status, #back-status { margin-top: 8px; min-height: 1.5em; }
+  .bad { color: var(--bad); }
+  .ok { color: var(--sea); }
+  a { color: var(--sea); }
+  ol { padding-left: 20px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <img src="logo.png" alt="Xebec">
+    <h1>Xebec installer</h1>
+    <div class="build">Test build <span id="build">__BUILD__</span> from the dev branch</div>
+  </header>
+
+  <section class="warn">
+    <h2>Before you install</h2>
+    <p>This is an early test build. Xebec shows its boot screen and nothing more: no sound, no keys, no USB yet.</p>
+    <p>To go back: hold <b>OCT-</b> and <b>OCT+</b> while switching the FM-1 on. It starts M-VAVE's update loader, and this page can then put M-VAVE's firmware back (below). From there, install your usual firmware from its own page.</p>
+  </section>
+
+  <section>
+    <h2>Install Xebec</h2>
+    <ol>
+      <li>Connect the FM-1 by USB and switch it on, running its current firmware (one with a web installer, like Manta or Tuna).</li>
+      <li>Use Chrome or Edge, close other MIDI apps, and allow MIDI access when asked.</li>
+      <li>Press Install and keep this page open until it says done (about two minutes).</li>
+    </ol>
+    <button id="install">Install</button>
+    <progress id="progress" max="1" value="0" hidden></progress>
+    <div id="status"></div>
+  </section>
+
+  <section>
+    <h2>Back to M-VAVE's firmware</h2>
+    <p>With the FM-1 in update mode (OCT- and OCT+ held at power-on), choose M-VAVE's stock package
+      <a href="https://github.com/m-vave/fm1_open/raw/4c7496daac04a95ff10d1afdcc8f9ead2dbabc41/sdk/firmware/FM-1_015.fwsc">FM-1_015.fwsc</a>.
+      It also puts M-VAVE's factory patches back, replacing the ones on the FM-1.</p>
+    <input type="file" id="stock" accept=".fwsc">
+    <div id="back-status"></div>
+  </section>
+</main>
+<script type="module">
+import { install, readPackage, checkPackage, STOCK_SHA256 } from "./install.js";
+
+const PACKAGE_SHA256 = "__SHA256__";
+const $ = (id) => document.getElementById(id);
+const say = (el, text, cls = "") => { el.textContent = text; el.className = cls; };
+const STEPS = {
+  staging: (id) => `${id} checks the package and sets up the update loader...`,
+  restart: () => "The FM-1 restarts into the update loader...",
+  writing: () => "The update loader writes Xebec. Do not unplug or switch off...",
+  done: () => "Done. The FM-1 restarts into Xebec: its screen shows XEBEC and the boot checks. Xebec has no USB yet, so this page cannot check it for you.",
+};
+
+async function midi() {
+  if (!navigator.requestMIDIAccess) throw new Error("This browser has no Web MIDI: use Chrome or Edge.");
+  try { return await navigator.requestMIDIAccess({ sysex: true }); }
+  catch (e) { throw new Error(`No MIDI access (${e.message}). Allow MIDI for this page in the browser's site settings.`); }
+}
+
+async function run(pkgBytes, expectSha, status) {
+  const bar = $("progress");
+  $("install").disabled = true;
+  try {
+    const pkg = await readPackage(pkgBytes);
+    checkPackage(pkg, expectSha);
+    const access = await midi();
+    bar.hidden = false; bar.value = 0;
+    await install(access, pkg, (step, id, part) => {
+      say(status, STEPS[step](id), step === "done" ? "ok" : "");
+      if (part !== undefined) bar.value = part;
+      if (step === "done") bar.value = 1;
+    });
+  } catch (e) {
+    say(status, e.message, "bad");
+  } finally {
+    $("install").disabled = false;
+  }
+}
+
+$("install").onclick = async () => {
+  const status = $("status");
+  say(status, "Loading the package...");
+  try {
+    const r = await fetch("xebec.fwsc", { cache: "no-store" });
+    if (!r.ok) throw new Error("The package could not be loaded.");
+    await run(await r.arrayBuffer(), PACKAGE_SHA256, status);
+  } catch (e) { say(status, e.message, "bad"); }
+};
+
+$("stock").onchange = async (ev) => {
+  const file = ev.target.files[0];
+  if (file) await run(await file.arrayBuffer(), STOCK_SHA256, $("back-status"));
+};
+</script>
+</body>
+</html>

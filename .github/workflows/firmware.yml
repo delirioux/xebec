@@ -10,6 +10,7 @@
 #    them, and over a leftover staging, and check what reaches the flash.
 # 5. Check the update package against M-VAVE's stock package, byte for byte,
 #    and boot it in fm1-emu as the FM-1's boot loader would.
+# 6. On dev: publish the installer on GitHub Pages under dev/ (tools/make_site.py).
 # The run's artifact "xebec-build" holds the app image, the disassembly,
 # the link map and the screen capture.
 name: Firmware
@@ -104,3 +105,29 @@ jobs:
             build/test/xebec_flashtest.dis
             build/test/xebec_flashtest.map
             work/*.bmp
+
+      - name: The site (dev's installer under dev/)
+        if: github.ref == 'refs/heads/dev'
+        run: python3 tools/make_site.py build/xebec.fwsc "$(git rev-parse --short=7 HEAD | tr 'a-f' 'A-F')" _site
+
+      - uses: actions/upload-pages-artifact@v3
+        if: github.ref == 'refs/heads/dev'
+        with:
+          path: _site
+
+  pages:
+    if: github.ref == 'refs/heads/dev'
+    needs: build
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
