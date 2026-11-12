@@ -49,7 +49,7 @@ static uint8_t ep1tx[64] XB_USB_DMA;
 static uint8_t ep1rx[68] XB_USB_DMA;
 static uint8_t zero2[2];
 
-uint32_t xb_usb_rx_count, xb_usb_tx_count;
+uint32_t xb_usb_rx_count, xb_usb_tx_count, xb_usb_tx_leftovers;
 uint32_t xb_usb_sie_timeouts, xb_usb_starts, xb_usb_bus_resets;
 
 #define QN 64u
@@ -170,7 +170,7 @@ static void ep1_config(void)
     XB_USB_EP_TADR(1) = (uint32_t)(uintptr_t)ep1tx;
     XB_USB_EP_RADR(1) = (uint32_t)(uintptr_t)ep1rx;
     sie_wr(S_INDEX, 1);
-    sie_wr(S_TXMAXP, 0xFF);
+    sie_wr(S_TXMAXP, 64);                  /* the endpoint's 64 bytes: never a longer packet on the wire (0xFF before) */
     sie_wr(S_TXCSR1, 0x48);
     sie_wr(S_TXCSR2, 0);
     sie_wr(S_RXMAXP, 0xFF);
@@ -346,6 +346,10 @@ static void ep1_tx(void)
         return;                            /* the last packet is still waiting */
     if (csr & 0x80u)
         sie_wr(S_TXCSR1, csr & ~0x80u);
+    if (csr & 0x02u) {                     /* FIFO not empty although nothing is pending: */
+        sie_wr(S_TXCSR1, 0x08u);           /* flush, or the next load adds to what is left */
+        xb_usb_tx_leftovers++;
+    }
     while (tx_r != tx_w && n < TX_CHUNK) {
         uint32_t p = txq[tx_r++ % QN];
 

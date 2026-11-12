@@ -223,7 +223,7 @@ static void usb_idle(void)
  * leaves everything as it was; the screen says why and Xebec runs on. */
 static void usb_update(void)
 {
-    char code[12];
+    char code[24];
     int rc;
     uint32_t i;
 
@@ -235,12 +235,16 @@ static void usb_update(void)
     if (rc) {
         unsigned k;
 
-        /* "1/43": the error, then how many read requests were made (where it stopped) */
+        /* "1/43/0": the error, the read requests made (where it stopped), the TX FIFO flushes */
         num_text(code, (uint32_t)-rc);
         for (k = 0; code[k]; k++)
             ;
         code[k++] = '/';
         num_text(code + k, xb_update_usb_reads);
+        for (; code[k]; k++)
+            ;
+        code[k++] = '/';
+        num_text(code + k, xb_usb_tx_leftovers); /* FIFO flushes before a load (usb.c) */
         check("PACKAGE", 0);
         check_value("REFUSED", code, 1);
         line_value(check_line - 1u, code, XB_COLOUR_FAIL);

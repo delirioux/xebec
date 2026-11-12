@@ -21,7 +21,7 @@ int xb_usb_up(void);
 int xb_usb_configured(void);
 
 /* Bulk transfers on EP1 so far (diagnostics). */
-extern uint32_t xb_usb_rx_count, xb_usb_tx_count;
+extern uint32_t xb_usb_rx_count, xb_usb_tx_count, xb_usb_tx_leftovers;
 /* SIE access timeouts, controller starts, bus resets from the host, all since power-on. */
 extern uint32_t xb_usb_sie_timeouts, xb_usb_starts, xb_usb_bus_resets;
 
