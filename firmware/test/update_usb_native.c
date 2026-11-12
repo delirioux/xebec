@@ -218,6 +218,7 @@ int main(int argc, char **argv)
         return 2;
     memcpy(head, h, sizeof head);
 
+    xb_update_usb_prepare();
     run("Xebec's package", xebec, xn, 0, XB_UU_OK, 1);
     run("M-VAVE's stock package", stock, sn, 0, XB_UU_OK, 1);
 
@@ -247,8 +248,10 @@ int main(int argc, char **argv)
     run("UFW head one bit off", bad, xn, 0, XB_UU_EUFW, 0);
 
     head[0x1234] ^= 0x01;
+    xb_update_usb_prepare();
     run("this FM-1's head differs", xebec, xn, 0, XB_UU_EHEAD, 0);
     head[0x1234] ^= 0x01;
+    xb_update_usb_prepare();
 
     run("installer silent", xebec, xn, 1, XB_UU_EHOST, 0);
     run("Xebec's package again", xebec, xn, 0, XB_UU_OK, 1);

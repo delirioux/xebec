@@ -228,10 +228,13 @@ static void usb_update(void)
     uint32_t i;
 
     xb_sysex_upgrade = 0;
+    /* Test (0.0.21): no screen drawing and no flash access between UPGRADE and the end of
+     * the checks; the identity (no drawing, no flash around it) gets through, the first
+     * read request (after a full-area fill and a 16 KiB flash read) did not. */
+    rc = xb_update_usb_check(usb_idle);
     xb_lcd_fill(0, CHECK_Y0, XB_LCD_W, XB_LCD_H - CHECK_Y0, XB_COLOUR_SEA);
     check_line = 0;
     check("UPDATE USB", 1);
-    rc = xb_update_usb_check(usb_idle);
     if (rc) {
         unsigned k;
 
@@ -314,6 +317,7 @@ void xb_main(void)
 
         centred(READY_Y, "READY");
 
+        xb_update_usb_prepare();           /* this FM-1's flash head, before USB runs */
         xb_usb_start();
         tried = xb_ticks();
         for (;;) {

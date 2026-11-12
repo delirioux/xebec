@@ -34,6 +34,10 @@
 #define XB_UU_FLASH_LEN 0x93000u
 #define XB_UU_HEAD_LEN  0x4000u
 
+/* Read this FM-1's flash head into RAM; call once at start-up, before USB runs (the
+ * flash is switched off the bus while it is read). */
+int xb_update_usb_prepare(void);
+
 /* Run the checks above. `idle` keeps USB going while waiting (poll the
  * controller, take SysEx); it must not spin on a peripheral register. */
 int xb_update_usb_check(void (*idle)(void));

@@ -20,6 +20,13 @@ uint32_t xb_update_usb_reads;
 
 static uint8_t ufw[1024], part[CHUNK], own_head[XB_UU_HEAD_LEN];
 static uint32_t started;
+static int head_read;
+
+int xb_update_usb_prepare(void)
+{
+    head_read = xb_flash_read(0, own_head, XB_UU_HEAD_LEN) == XB_FLASH_OK;
+    return head_read ? XB_UU_OK : XB_UU_EFLASH;
+}
 
 static uint32_t rd16(const uint8_t *p) { return (uint32_t)p[0] | (uint32_t)p[1] << 8; }
 static uint32_t rd32(const uint8_t *p) { return rd16(p) | rd16(p + 2) << 16; }
@@ -68,10 +75,7 @@ int xb_update_usb_check(void (*idle)(void))
     int have_fl = 0, have_ota = 0;
 
     xb_update_usb_reads = 0;
-
-    /* This FM-1's flash head first, while the installer waits for our first request:
-     * the flash driver spins on SPI0 registers, which must not happen during USB traffic. */
-    if (xb_flash_read(0, own_head, XB_UU_HEAD_LEN))
+    if (!head_read)
         return XB_UU_EFLASH;
     started = xb_ticks();
 
