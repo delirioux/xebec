@@ -327,6 +327,10 @@ static void ep1_rx(void)
     sie_wr(S_RXCSR2, csr >> 8);
 }
 
+/* Bytes per EP1 IN transfer. Test (0.0.16): at 64, about half of the replies ended in babble
+ * on an FM-1; does a short transfer get through? */
+#define TX_CHUNK 16u
+
 static void ep1_tx(void)
 {
     uint32_t csr, n = 0;
@@ -339,7 +343,7 @@ static void ep1_tx(void)
         return;                            /* the last packet is still waiting */
     if (csr & 0x80u)
         sie_wr(S_TXCSR1, csr & ~0x80u);
-    while (tx_r != tx_w && n < 64u) {
+    while (tx_r != tx_w && n < TX_CHUNK) {
         uint32_t p = txq[tx_r++ % QN];
 
         ep1tx[n++] = (uint8_t)p;
