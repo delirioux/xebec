@@ -46,7 +46,8 @@ Status: ✅ done · 🔨 in progress · ⬜ to do
   - 0.0.6: the CORE 0 line becomes CPU, core 0's clock measured against TIMER4 (24 MHz crystal) with 1,000,000 dependent adds from RAM; an FM-1 shows 360 MHz, M-VAVE's boot configuration's `SYS_CLK` (fm1-emu runs at 240)
 - ✅ Way back to the official firmware, tested: OCT- + OCT+ at power-on, then M-VAVE's FM-1_015 from the installer page (done on an FM-1 with 0.0.4)
 - ✅ Install detection: Xebec answers the identity question over USB-MIDI (`FM-1_47932320`), and the installer page confirms Xebec runs after an install
-- 🔨 Update over USB-MIDI, no key held: on the installer's UPGRADE, Xebec reads the package's UFW head, loader and flash head with read requests, refuses another board's package, a different loader or a different flash head, and stages the loader only after the installer confirms (`update_usb.c`, native test against a simulated installer in CI); to be tried on an FM-1
+- 🔨 Update over USB-MIDI, no key held: for now Xebec stages its loader right away on the installer's UPGRADE (the page checks the package). The checks over USB (`update_usb.c`: UFW head, board size, loader, flash head, the installer's go-ahead; native test in CI) wait for the babble fix below
+- ⬜ USB babble: on an FM-1 about half of Xebec's EP1 IN replies end in `urb status -75` and a port reset, with register-for-register Felucca's USB code and M-VAVE's (checked in `libfm1_engine.a`). Not the cause: screen drawing, flash access, poll rate, SOF flag, TXMAXP, a FIFO leftover, the RAM layout, LOWP_MD. Next: bisect against Felucca's runtime (timer-interrupt poll, interrupt set-up)
 
 *The first milestone that goes onto a real FM-1.*
 

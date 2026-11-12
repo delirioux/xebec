@@ -127,9 +127,6 @@ int xb_usb_start(void)
     XB_USB_IO_CON0 &= ~0xF0u;
     XB_USB_IO_CON0 |= 0x40u;
     XB_USB_CON0 |= 0x3Cu;
-    /* LOWP_MD (bit 18): 1 = the core's low-power mode off (allowed from a 48 MHz system clock;
-     * ours is 360). CON0 = 0 above had switched that mode on. */
-    XB_USB_CON0 |= 1u << 18;
 
     sie_wr(S_POWER, 0x60);
     sie_wr(S_INTRUSBE, 0x07);

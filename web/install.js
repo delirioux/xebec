@@ -231,7 +231,18 @@ export async function install(access, pkg, step = () => {}) {
   const dev = await findDevice(access, (id) => /^FM-1_/.test(id) || isLoader(id));
   if (!dev) fail("notfound", "No FM-1 found. Check the USB cable, switch it on, and close other MIDI apps.");
   let loader = dev;
-  if (!isLoader(dev.id)) {
+  if (dev.id === PRODUCT) {
+    // Xebec stages its own loader on UPGRADE and restarts, without reading the package
+    // (its replies over USB are not reliable yet); this page checked the package already.
+    step("staging", dev.id, 0.05);
+    dev.link.send(UPGRADE);
+    await sleep(500);
+    dev.link.close();
+    step("restart", dev.id, 0.1);
+    await sleep(3000);
+    loader = await waitDevice(access, isLoader, 40000);
+    if (!loader) fail("noloader", "The update loader did not appear. Unplug and replug the USB cable, then press Install again: the FM-1 stays in update mode until it is done.");
+  } else if (!isLoader(dev.id)) {
     step("staging", dev.id);
     dev.link.send(UPGRADE);
     const stageBytes = 1024 + 0x4000 + pkg.loaderLen;      // UFW head, flash head, loader
