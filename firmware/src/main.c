@@ -119,7 +119,7 @@ static void diag_line(unsigned y, const char *const parts[3], const uint32_t val
 
 /* Top: transfers in, identity questions, transfers out. Bottom, over READY: SIE timeouts,
  * controller starts, bus resets from the host. */
-static void diag_draw(void)
+__attribute__((unused)) static void diag_draw(void)
 {
     static const char *const top[3] = { "RX ", " ID ", " TX " };
     static const char *const bottom[3] = { "TO ", " ST ", " RS " };
@@ -135,7 +135,7 @@ static void diag_draw(void)
     diag_line(READY_Y, bottom, b);
 }
 
-static uint32_t diag_sum(void)
+__attribute__((unused)) static uint32_t diag_sum(void)
 {
     return xb_usb_rx_count + xb_sysex_identities + xb_usb_tx_count + xb_usb_sie_timeouts +
            xb_usb_starts + xb_usb_bus_resets;
@@ -328,12 +328,13 @@ void xb_main(void)
                 shown = now;
                 line_value(usb_line, now ? "OK" : "--", now ? XB_COLOUR_OK : XB_COLOUR_TEXT);
             }
+            /* Test (0.0.17): no screen drawing while USB runs. A capture of 0.0.16 showed each
+             * reply leaving 18 ms after the question, the time the counter lines took to draw, and
+             * the babble on the packet armed just before a redraw. */
             if (now)
-                seen = 1;                      /* counters only once a host has configured us */
-            if (seen && diag != diag_sum()) {  /* every counter only grows */
-                diag = diag_sum();
-                diag_draw();
-            }
+                seen = 1;
+            (void)seen;
+            (void)diag;
             if (!xb_usb_up() && xb_ticks() - tried > 24000000u) {   /* no cable: try once a second */
                 xb_usb_start();
                 tried = xb_ticks();

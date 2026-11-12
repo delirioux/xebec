@@ -327,9 +327,8 @@ static void ep1_rx(void)
     sie_wr(S_RXCSR2, csr >> 8);
 }
 
-/* Bytes per EP1 IN transfer. Test (0.0.16): at 64, about half of the replies ended in babble
- * on an FM-1; does a short transfer get through? */
-#define TX_CHUNK 16u
+/* Bytes per EP1 IN transfer (16 in 0.0.16 failed just the same). */
+#define TX_CHUNK 64u
 
 static void ep1_tx(void)
 {
