@@ -91,16 +91,11 @@ static void num_text(char *out, uint32_t v)
     out[i] = 0;
 }
 
-static void diag_draw(void)
+static void diag_line(unsigned y, const char *const parts[3], const uint32_t vals[3])
 {
     char line[40], num[12];
-    const char *parts[3] = { "RX ", " ID ", " TX " };
-    uint32_t vals[3];
     unsigned i, k, n = 0;
 
-    vals[0] = xb_usb_rx_count;
-    vals[1] = xb_sysex_identities;
-    vals[2] = xb_usb_tx_count;
     for (i = 0; i < 3u; i++) {
         for (k = 0; parts[i][k]; k++)
             line[n++] = parts[i][k];
@@ -109,8 +104,32 @@ static void diag_draw(void)
             line[n++] = num[k];
     }
     line[n] = 0;
-    xb_lcd_fill(LABEL_X, DIAG_Y, XB_LCD_W - 2u * LABEL_X, 14u, XB_COLOUR_SEA);
-    xb_text_draw(LABEL_X, DIAG_Y, line, 2, XB_COLOUR_TEXT, XB_COLOUR_SEA);
+    xb_lcd_fill(LABEL_X, y, XB_LCD_W - 2u * LABEL_X, 14u, XB_COLOUR_SEA);
+    xb_text_draw(LABEL_X, y, line, 2, XB_COLOUR_TEXT, XB_COLOUR_SEA);
+}
+
+/* Top: transfers in, identity questions, transfers out. Bottom, over READY: SIE timeouts,
+ * controller starts, bus resets from the host. */
+static void diag_draw(void)
+{
+    static const char *const top[3] = { "RX ", " ID ", " TX " };
+    static const char *const bottom[3] = { "TO ", " ST ", " RS " };
+    uint32_t a[3], b[3];
+
+    a[0] = xb_usb_rx_count;
+    a[1] = xb_sysex_identities;
+    a[2] = xb_usb_tx_count;
+    b[0] = xb_usb_sie_timeouts;
+    b[1] = xb_usb_starts;
+    b[2] = xb_usb_bus_resets;
+    diag_line(DIAG_Y, top, a);
+    diag_line(READY_Y, bottom, b);
+}
+
+static uint32_t diag_sum(void)
+{
+    return xb_usb_rx_count + xb_sysex_identities + xb_usb_tx_count + xb_usb_sie_timeouts +
+           xb_usb_starts + xb_usb_bus_resets;
 }
 
 /* A line's value, right-aligned where OK ends, over whatever was there. */
@@ -217,7 +236,7 @@ void xb_main(void)
     {
         int flash = flash_check(), rc = 0;
         unsigned usb_line;
-        int shown = 0;
+        int shown = 0, seen = 0;
         uint32_t tried, polled, diag = 0xFFFFFFFFu;
 
         check("FLASH", flash);
@@ -251,8 +270,10 @@ void xb_main(void)
                 shown = now;
                 line_value(usb_line, now ? "OK" : "--", now ? XB_COLOUR_OK : XB_COLOUR_TEXT);
             }
-            if (now && diag != xb_usb_rx_count + 1000u * xb_sysex_identities + 1000000u * xb_usb_tx_count) {
-                diag = xb_usb_rx_count + 1000u * xb_sysex_identities + 1000000u * xb_usb_tx_count;
+            if (now)
+                seen = 1;                      /* counters only once a host has configured us */
+            if (seen && diag != diag_sum()) {  /* every counter only grows */
+                diag = diag_sum();
                 diag_draw();
             }
             if (!xb_usb_up() && xb_ticks() - tried > 24000000u) {   /* no cable: try once a second */

@@ -46,6 +46,7 @@ static uint8_t ep1rx[68] __attribute__((aligned(4)));
 static uint8_t zero2[2];
 
 uint32_t xb_usb_rx_count, xb_usb_tx_count;
+uint32_t xb_usb_sie_timeouts, xb_usb_starts, xb_usb_bus_resets;
 
 #define QN 64u
 static uint32_t txq[QN], rxq[QN];
@@ -73,7 +74,7 @@ static void sie_wr(uint32_t r, uint32_t v)
         ;
     if (n)
         usb.timeouts = 0;
-    else if (++usb.timeouts > 50u)
+    else if (++xb_usb_sie_timeouts, ++usb.timeouts > 50u)
         usb.up = 0;
 }
 
@@ -87,7 +88,7 @@ static uint32_t sie_rd(uint32_t r)
     sync_out();
     while (!(XB_USB_CON1 & 0x8000u))
         if (!--n) {
-            if (++usb.timeouts > 50u)
+            if (++xb_usb_sie_timeouts, ++usb.timeouts > 50u)
                 usb.up = 0;
             return 0;
         }
@@ -102,6 +103,7 @@ int xb_usb_start(void)
     uint32_t n;
 
     usb.timeouts = 0;
+    xb_usb_starts++;
     XB_USB_CON0 = 0;
     XB_USB_CON1 = 0;
     XB_USB_IO_CON0 = 0x0Cu;
@@ -362,6 +364,7 @@ void xb_usb_poll(void)
     it = sie_rd(S_INTRTX1);
     ir = sie_rd(S_INTRRX1);
     if (iu & 0x04u) {                      /* bus reset */
+        xb_usb_bus_resets++;
         sie_wr(S_FADDR, 0);
         usb.config = 0;
         usb.e0_tx = 0;
