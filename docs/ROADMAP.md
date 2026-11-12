@@ -39,7 +39,6 @@ Status: ✅ done · 🔨 in progress · ⬜ to do
   - Identity `FM-1_47932320`, in the range of Xebec's sister firmwares
   - Every build checks it against M-VAVE's package fetched from M-VAVE's repository, checks the write window (`0xE0000`–`0xE5000`, inside VM, past the package, clear of BTIF, the patches and key_mac), and boots the package in fm1-emu to the boot screen
 - ✅ Installer page (GitHub Pages, `dev/`): Web MIDI, both update steps, only packages that keep M-VAVE's boot loader and loader; also puts M-VAVE's stock firmware back from update mode
-  - Survives the USB resets Xebec's replies still cause: keeps looking for the FM-1 for 30 s, and sends UPGRADE again as long as Xebec still answers instead of its loader
   - Tested against Manta's own update code: it accepts Xebec's package and stages the loader byte for byte as Xebec's update mode does, and refuses a package whose head does not match the FM-1's without writing anything
 - ✅ First install on a real FM-1, display bring-up confirmed
   - 0.0.4 installed from Manta and booted: backlight on, but no picture (SPI1 was not routed to the display pins nor set as master); update mode, the flash driver and the hand-over to M-VAVE's loader all worked on hardware
@@ -48,7 +47,7 @@ Status: ✅ done · 🔨 in progress · ⬜ to do
 - ✅ Way back to the official firmware, tested: OCT- + OCT+ at power-on, then M-VAVE's FM-1_015 from the installer page (done on an FM-1 with 0.0.4)
 - ✅ Install detection: Xebec answers the identity question over USB-MIDI (`FM-1_47932320`), and the installer page confirms Xebec runs after an install
 - 🔨 Update over USB-MIDI, no key held: for now Xebec stages its loader right away on the installer's UPGRADE (the page checks the package). The checks over USB (`update_usb.c`: UFW head, board size, loader, flash head, the installer's go-ahead; native test in CI) wait for the babble fix below
-- ⬜ USB babble: on an FM-1 about half of Xebec's EP1 IN replies end in `urb status -75` and a port reset, with register-for-register Felucca's USB code and M-VAVE's (checked in `libfm1_engine.a`). Not the cause: screen drawing, flash access, poll rate, SOF flag, TXMAXP, a FIFO leftover, the RAM layout, LOWP_MD. 0.0.24 tries POWER 0x40 (soft connect only, as M-VAVE's SDK) instead of 0x60 (with the high-speed enable bit). Next, if that is not it: bisect against Felucca's runtime (timer-interrupt poll, interrupt set-up)
+- ⬜ USB babble: on an FM-1 about half of Xebec's EP1 IN replies end in `urb status -75` and a port reset, with register-for-register Felucca's USB code and M-VAVE's (checked in `libfm1_engine.a`). Not the cause: screen drawing, flash access, poll rate, SOF flag, TXMAXP, a FIFO leftover, the RAM layout, LOWP_MD. Next: bisect against Felucca's runtime (timer-interrupt poll, interrupt set-up)
 
 *The first milestone that goes onto a real FM-1.*
 
