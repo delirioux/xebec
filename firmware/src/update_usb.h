@@ -10,7 +10,8 @@
  *   2. flash.bin is this board's size (0x93000): another board's package is refused;
  *   3. ota.bin is byte for byte the loader Xebec carries (M-VAVE's, ota_stage.h);
  *   4. the first 16 KiB of flash.bin equal this FM-1's flash head, which the
- *      loader rewrites (the same check Felucca makes);
+ *      loader rewrites (the same check Felucca makes); the head is read from
+ *      flash before the first request, never during USB traffic;
  *   5. the installer confirms ("success" at address 0xE0000000).
  * Only then does the caller stage the loader and restart (update.h), as the
  * OCT- + OCT+ path does. Nothing is erased or written here.

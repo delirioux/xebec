@@ -232,7 +232,14 @@ static void usb_update(void)
     check("UPDATE USB", 1);
     rc = xb_update_usb_check(usb_idle);
     if (rc) {
+        unsigned k;
+
+        /* "1/43": the error, then how many read requests were made (where it stopped) */
         num_text(code, (uint32_t)-rc);
+        for (k = 0; code[k]; k++)
+            ;
+        code[k++] = '/';
+        num_text(code + k, xb_update_usb_reads);
         check("PACKAGE", 0);
         check_value("REFUSED", code, 1);
         line_value(check_line - 1u, code, XB_COLOUR_FAIL);

@@ -18,7 +18,7 @@
 
 uint32_t xb_update_usb_reads;
 
-static uint8_t ufw[1024], part[CHUNK], mine[CHUNK];
+static uint8_t ufw[1024], part[CHUNK], own_head[XB_UU_HEAD_LEN];
 static uint32_t started;
 
 static uint32_t rd16(const uint8_t *p) { return (uint32_t)p[0] | (uint32_t)p[1] << 8; }
@@ -65,10 +65,15 @@ static int fetch(void (*idle)(void), uint32_t addr, uint8_t *dst, uint32_t len)
 int xb_update_usb_check(void (*idle)(void))
 {
     uint32_t i, n, count, fl_off = 0, fl_len = 0, ota_off = 0, ota_len = 0;
-    int have_fl = 0, have_ota = 0, rc;
+    int have_fl = 0, have_ota = 0;
 
-    started = xb_ticks();
     xb_update_usb_reads = 0;
+
+    /* This FM-1's flash head first, while the installer waits for our first request:
+     * the flash driver spins on SPI0 registers, which must not happen during USB traffic. */
+    if (xb_flash_read(0, own_head, XB_UU_HEAD_LEN))
+        return XB_UU_EFLASH;
+    started = xb_ticks();
 
     /* 1. UFW head (64 bytes) and entry list (80 bytes each), checked by their CRCs. */
     if (fetch(idle, 0, ufw, CHUNK) || fetch(idle, CHUNK, ufw + CHUNK, CHUNK))
@@ -114,10 +119,7 @@ int xb_update_usb_check(void (*idle)(void))
     for (i = 0; i < XB_UU_HEAD_LEN; i += CHUNK) {
         if (fetch(idle, fl_off + i, part, CHUNK))
             return XB_UU_EHOST;
-        rc = xb_flash_read(i, mine, CHUNK);
-        if (rc)
-            return XB_UU_EFLASH;
-        if (!same(part, mine, CHUNK))
+        if (!same(part, own_head + i, CHUNK))
             return XB_UU_EHEAD;
     }
 
