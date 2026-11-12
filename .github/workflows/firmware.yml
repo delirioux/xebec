@@ -74,7 +74,7 @@ jobs:
           mkdir -p work
           emu/target/release/fm1-emu --bin build/xebec_xip.bin --entry 0x02000120 \
               --ms 2000 --snap 1900 --steps 2000000000 --quiet | tail -n 20
-          python3 tools/check_boot_screen.py work/lcd_1900.bmp "$(git rev-parse --short=7 HEAD | tr 'a-f' 'A-F')"
+          python3 tools/check_boot_screen.py work/lcd_1900.bmp "$(git rev-parse --short=7 HEAD | tr 'a-f' 'A-F')" 240
 
       - name: Update path in fm1-emu (update keys, one key, leftover staging)
         run: python3 tools/check_update_path.py emu/target/release/fm1-emu build/xebec_xip.bin build/xebec.elf work
@@ -90,7 +90,7 @@ jobs:
         run: |
           emu/target/release/fm1-emu --fwsc build/xebec.fwsc --ms 2000 --snap 1900 --steps 2000000000 --quiet | tail -n 20
           mv work/lcd_1900.bmp work/package_lcd_1900.bmp
-          python3 tools/check_boot_screen.py work/package_lcd_1900.bmp "$(git rev-parse --short=7 HEAD | tr 'a-f' 'A-F')"
+          python3 tools/check_boot_screen.py work/package_lcd_1900.bmp "$(git rev-parse --short=7 HEAD | tr 'a-f' 'A-F')" 240
 
       - uses: actions/upload-artifact@v7
         if: always()

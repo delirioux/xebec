@@ -24,7 +24,8 @@ SEA, TEXT, RULE, OK, FAIL = (0x00, 0x80, 0x80), (0xFF, 0xFF, 0xFF), (0x80, 0xC0,
     (0x40, 0xFF, 0x40), (0xFF, 0x40, 0x40)
 TITLE_Y, VERSION_Y, RULE_Y, CHECK_Y0, CHECK_STEP = 20, 64, 90, 104, 24
 LABEL_X, RESULT_X, READY_Y = 12, 204, 208
-CHECKS = ["DISPLAY", "RAM 64K", "CORE 0", "FLASH"]
+CHECKS = ["DISPLAY", "RAM 64K", "CPU", "FLASH"]
+VALUE_CHECKS = {"CPU": lambda n: f"{n}MHZ"}      # drawn with a measured value instead of OK
 
 
 def rgb565_shown(rgb):
@@ -76,8 +77,9 @@ class Screen:
         self.text((W - self.width(text, scale)) // 2, y, text, scale, fg, SEA)
 
 
-def expected(build, fail_ram=False):
+def expected(build, fail_ram=False, values=None):
     s = Screen(load_font())
+    values = values or {}
     s.centred(TITLE_Y, "XEBEC", 4, TEXT)
     s.centred(VERSION_Y, f"V{version()}  {build}", 2, TEXT)
     s.fill(LABEL_X, RULE_Y, W - 2 * LABEL_X, 2, RULE)
@@ -86,6 +88,9 @@ def expected(build, fail_ram=False):
         s.text(LABEL_X, y, label, 2, TEXT, SEA)
         if fail_ram and label.startswith("RAM"):
             s.text(RESULT_X - 24, y, "FAIL", 2, FAIL, SEA)
+        elif label in VALUE_CHECKS:
+            text = values.get(label, "")
+            s.text(RESULT_X + s.width("OK", 2) - s.width(text, 2), y, text, 2, OK, SEA)
         else:
             s.text(RESULT_X, y, "OK", 2, OK, SEA)
     s.centred(READY_Y, "READY", 2, TEXT)
@@ -118,10 +123,33 @@ def write_bmp(path, px):
     open(path, "wb").write(out)
 
 
+def find_value(got, label, lo, hi):
+    """The number drawn on a value line, if one renders exactly as on screen."""
+    i = CHECKS.index(label)
+    y0 = CHECK_Y0 + i * CHECK_STEP
+    rows = range(y0, y0 + 14)
+    for n in range(lo, hi + 1):
+        s = Screen(load_font())
+        s.fill(0, y0, W, 14, SEA)
+        text = VALUE_CHECKS[label](n)
+        s.text(LABEL_X, y0, label, 2, TEXT, SEA)
+        s.text(RESULT_X + s.width("OK", 2) - s.width(text, 2), y0, text, 2, OK, SEA)
+        if all(abs(a - b) <= 2 for y in rows for x in range(W) for a, b in zip(got[y][x], s.px[y][x])):
+            return n
+    return None
+
+
 def main():
     path, build = sys.argv[1], sys.argv[2]
+    want_mhz = int(sys.argv[3]) if len(sys.argv) > 3 else None
     got = read_bmp(path)
-    want = expected(build)
+    mhz = find_value(got, "CPU", 24, 1000)
+    if mhz is None:
+        sys.exit(f"{path}: the CPU line shows no clock between 24 and 1000 MHz")
+    print(f"{path}: CPU line shows {mhz} MHz")
+    if want_mhz is not None and mhz != want_mhz:
+        sys.exit(f"{path}: CPU {mhz} MHz, expected {want_mhz}")
+    want = expected(build, values={"CPU": VALUE_CHECKS["CPU"](mhz)})
     write_bmp(os.path.join(os.path.dirname(path) or ".", "expected.bmp"), want)
 
     wrong = [(x, y) for y in range(H) for x in range(W)

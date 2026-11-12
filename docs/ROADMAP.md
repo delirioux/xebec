@@ -12,7 +12,7 @@ Status: ✅ done · 🔨 in progress · ⬜ to do
 - ✅ Own start-up code, memory layout and C runtime
 - ✅ Own display driver (ST7789V on SPI1)
 - ✅ The screen shows one colour, checked pixel for pixel in fm1-emu on every build
-- ✅ Boot test screen: name, version and build code, then the boot checks line by line (display, RAM, core 0, flash), in Xebec's own font (confirmed on an FM-1 with 0.0.5)
+- ✅ Boot test screen: name, version and build code, then the boot checks line by line (display, RAM, CPU clock, flash), in Xebec's own font (confirmed on an FM-1 with 0.0.5)
 
 *Proven in fm1-emu. The first check on a real FM-1 comes with milestone 2.*
 
@@ -43,6 +43,7 @@ Status: ✅ done · 🔨 in progress · ⬜ to do
 - ✅ First install on a real FM-1, display bring-up confirmed
   - 0.0.4 installed from Manta and booted: backlight on, but no picture (SPI1 was not routed to the display pins nor set as master); update mode, the flash driver and the hand-over to M-VAVE's loader all worked on hardware
   - 0.0.5: SPI1 routing and master mode as M-VAVE's SDK and Felucca set them; the boot screen shows on an FM-1, every check OK
+  - 0.0.6: the CORE 0 line becomes CPU, core 0's clock measured against TIMER4 (24 MHz crystal) with 1,000,000 dependent adds from RAM
 - ✅ Way back to the official firmware, tested: OCT- + OCT+ at power-on, then M-VAVE's FM-1_015 from the installer page (done on an FM-1 with 0.0.4)
 - ⬜ Later: answer the update protocol over USB-MIDI, so installers can update Xebec without a key held
 

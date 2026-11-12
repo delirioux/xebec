@@ -15,6 +15,17 @@
 
 #define XB_REG32(addr) (*(volatile uint32_t *)(uintptr_t)(addr))
 
+/* Code copied to RAM at start-up (checked by tools/check_ram_code.py). */
+#define XB_RAM_CODE __attribute__((section(".xb_ram_code"), noinline, used))
+
+/* TIMER4: free-running from the 24 MHz crystal (measured on an FM-1 by
+ * Felucca). CON bits 1:0 = 1 run, 3:2 = 2 crystal, bit 14 clears pending. */
+#define XB_T4_CON         XB_REG32(0x10800u)
+#define XB_T4_CNT         XB_REG32(0x10804u)
+#define XB_T4_PRD         XB_REG32(0x10808u)
+#define XB_T4_RUN_XTAL    ((2u << 2) | 1u)
+#define XB_T4_HZ          24000000u
+
 /* GPIO ports A..H, 0x40 apart: OUT +0x00, IN +0x04, DIR +0x08 (1 = input),
  * DIE +0x0C (digital input on), PU +0x10 / PD +0x14 (pull-up / pull-down). */
 #define XB_PORT_BASE(n)   (0x50000u + 0x40u * (n))

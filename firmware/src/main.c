@@ -14,6 +14,7 @@
 #include "../board/lcd.h"
 #include "../board/flash.h"
 #include "../board/keys.h"
+#include "../board/clock.h"
 #include "update.h"
 #include "delay.h"
 #include "text.h"
@@ -61,6 +62,42 @@ static void check(const char *label, int ok)
     else
         xb_text_draw(RESULT_X - 24u, y, "FAIL", 2, XB_COLOUR_FAIL, XB_COLOUR_SEA);
     check_line++;
+}
+
+/* A check line with a value instead of OK, right-aligned where OK ends. */
+static void check_value(const char *label, const char *value, int ok)
+{
+    unsigned y = CHECK_Y0 + check_line * CHECK_STEP;
+    unsigned right = RESULT_X + xb_text_width("OK", 2);
+
+    xb_text_draw(LABEL_X, y, label, 2, XB_COLOUR_TEXT, XB_COLOUR_SEA);
+    if (ok)
+        xb_text_draw(right - xb_text_width(value, 2), y, value, 2, XB_COLOUR_OK, XB_COLOUR_SEA);
+    else
+        xb_text_draw(RESULT_X - 24u, y, "FAIL", 2, XB_COLOUR_FAIL, XB_COLOUR_SEA);
+    check_line++;
+}
+
+/* "240MHZ": up to four digits, without a divide. */
+static void mhz_text(char *out, uint32_t mhz)
+{
+    static const uint32_t pow10[] = { 1000u, 100u, 10u, 1u };
+    unsigned i, n = 0;
+
+    for (i = 0; i < 4u; i++) {
+        char digit = '0';
+
+        while (mhz >= pow10[i]) {
+            mhz -= pow10[i];
+            digit++;
+        }
+        if (n || digit != '0' || i == 3u)
+            out[n++] = digit;
+    }
+    out[n++] = 'M';
+    out[n++] = 'H';
+    out[n++] = 'Z';
+    out[n] = 0;
 }
 
 static void centred(unsigned y, const char *text)
@@ -114,7 +151,13 @@ void xb_main(void)
         update_mode();
 
     check("RAM 64K", xb_ramtest());
-    check("CORE 0", 1);
+    {
+        uint32_t mhz = xb_cpu_mhz();
+        char text[8];
+
+        mhz_text(text, mhz);
+        check_value("CPU", text, mhz >= 24u && mhz <= 1000u);
+    }
     if (flash_check()) {
         int rc;
 

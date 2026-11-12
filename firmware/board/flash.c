@@ -20,8 +20,6 @@
 #include "flash.h"
 #include "fm1_regs.h"
 
-#define XB_RAM_CODE __attribute__((section(".xb_ram_code"), noinline, used))
-
 /* From xebec.ld: the write window start (a flash offset) and Xebec's RAM. */
 extern const char __xb_flash_safe_lo[];
 extern const char __xb_ram_lo[], __xb_ram_hi[];
