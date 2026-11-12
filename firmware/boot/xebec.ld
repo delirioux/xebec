@@ -12,11 +12,17 @@
  * the flash is off the bus while it erases or programs.
  *
  * Flash offsets: XIP 0x02000000 shows flash offset 0x4000.
+ *
+ * RAM starts at 0x01C08000. Up to 0.0.17 it started at 0x01C00000, and on an
+ * FM-1 about half of the USB replies came out as babble with code that is
+ * register for register Felucca's. Every firmware known to work on the FM-1
+ * keeps its data above 0x01C08000 (Felucca's app; Felucca's and M-VAVE's
+ * update loaders at 0x01C0A800).
  */
 MEMORY
 {
     XIP (rx)  : ORIGIN = 0x02000120, LENGTH = 0x00080000
-    RAM (rwx) : ORIGIN = 0x01C00000, LENGTH = 0x00060000
+    RAM (rwx) : ORIGIN = 0x01C08000, LENGTH = 0x00058000   /* as Felucca: no data below 0x01C08000 */
 }
 
 ENTRY(xb_start)
