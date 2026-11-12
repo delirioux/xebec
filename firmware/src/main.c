@@ -68,7 +68,7 @@ static void check(const char *label, int ok)
 }
 
 /* Diagnostics at the top: USB transfers in, identity questions, transfers out. */
-#define DIAG_Y 6u            /* above the title, clear of every check line */
+#define DIAG_Y 3u            /* above the title, clear of every check line */
 
 static void num_text(char *out, uint32_t v)
 {
@@ -93,7 +93,7 @@ static void num_text(char *out, uint32_t v)
 static void diag_draw(void)
 {
     char line[40], num[12];
-    const char *parts[3] = { "RX ", "  ID ", "  TX " };
+    const char *parts[3] = { "RX ", " ID ", " TX " };
     uint32_t vals[3];
     unsigned i, k, n = 0;
 
@@ -108,8 +108,8 @@ static void diag_draw(void)
             line[n++] = num[k];
     }
     line[n] = 0;
-    xb_lcd_fill(LABEL_X, DIAG_Y, XB_LCD_W - 2u * LABEL_X, 8u, XB_COLOUR_SEA);
-    xb_text_draw(LABEL_X, DIAG_Y, line, 1, XB_COLOUR_TEXT, XB_COLOUR_SEA);
+    xb_lcd_fill(LABEL_X, DIAG_Y, XB_LCD_W - 2u * LABEL_X, 14u, XB_COLOUR_SEA);
+    xb_text_draw(LABEL_X, DIAG_Y, line, 2, XB_COLOUR_TEXT, XB_COLOUR_SEA);
 }
 
 /* A line's value, right-aligned where OK ends, over whatever was there. */
