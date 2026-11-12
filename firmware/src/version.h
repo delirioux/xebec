@@ -6,6 +6,6 @@
 #ifndef XB_VERSION_H
 #define XB_VERSION_H
 
-#define XB_VERSION "0.0.12"
+#define XB_VERSION "0.0.13"
 
 #endif

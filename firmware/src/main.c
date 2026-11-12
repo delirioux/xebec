@@ -18,6 +18,7 @@
 #include "../board/usb.h"
 #include "sysex.h"
 #include "update.h"
+#include "update_usb.h"
 #include "delay.h"
 #include "text.h"
 #include "ramtest.h"
@@ -209,6 +210,48 @@ static void update_mode(void)
     xb_update_restart();
 }
 
+static void usb_idle(void)
+{
+    cpu_wait();
+    xb_usb_poll();
+    xb_sysex_service();
+}
+
+/* The installer sent UPGRADE: check the package with it (update_usb.h), then
+ * stage the loader and restart as update_mode() does. A refused package
+ * leaves everything as it was; the screen says why and Xebec runs on. */
+static void usb_update(void)
+{
+    char code[12];
+    int rc;
+    uint32_t i;
+
+    xb_sysex_upgrade = 0;
+    xb_lcd_fill(0, CHECK_Y0, XB_LCD_W, XB_LCD_H - CHECK_Y0, XB_COLOUR_SEA);
+    check_line = 0;
+    check("UPDATE USB", 1);
+    rc = xb_update_usb_check(usb_idle);
+    if (rc) {
+        num_text(code, (uint32_t)-rc);
+        check("PACKAGE", 0);
+        check_value("REFUSED", code, 1);
+        line_value(check_line - 1u, code, XB_COLOUR_FAIL);
+        return;
+    }
+    check("PACKAGE", 1);
+    rc = xb_update_prepare();
+    check("LOADER", rc == XB_FLASH_OK);
+    if (rc != XB_FLASH_OK) {
+        centred(READY_Y, "UPDATE FAILED");
+        for (;;)
+            usb_idle();
+    }
+    centred(READY_Y, "RESTART");
+    for (i = 0; i < 1200u; i++)            /* about 300 ms, USB still served */
+        usb_idle();
+    xb_update_restart();
+}
+
 void xb_main(void)
 {
     unsigned w;
@@ -243,7 +286,7 @@ void xb_main(void)
     {
         int flash = flash_check(), rc = 0;
         unsigned usb_line;
-        int shown = 0, seen = 0;
+        int shown = 0, seen = 0, updated = 0;
         uint32_t tried, diag = 0xFFFFFFFFu;
 
         check("FLASH", flash);
@@ -267,11 +310,13 @@ void xb_main(void)
             /* Between polls the CPU waits on itself, not on a peripheral register: spinning on
              * the SIE (0.0.7-0.0.9) or on TIMER4 (0.0.10) kept the peripheral bus busy, and the
              * host saw babble (EOVERFLOW) on Xebec's replies and reset the port. */
-            cpu_wait();
-            xb_usb_poll();
-            xb_sysex_service();
+            usb_idle();
+            if (xb_sysex_upgrade) {
+                usb_update();                  /* returns only when the package was refused */
+                updated = 1;
+            }
             now = xb_usb_configured();
-            if (now != shown) {
+            if (now != shown && !updated) {
                 shown = now;
                 line_value(usb_line, now ? "OK" : "--", now ? XB_COLOUR_OK : XB_COLOUR_TEXT);
             }

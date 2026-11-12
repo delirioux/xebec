@@ -231,10 +231,6 @@ export async function install(access, pkg, step = () => {}) {
   const dev = await findDevice(access, (id) => /^FM-1_/.test(id) || isLoader(id));
   if (!dev) fail("notfound", "No FM-1 found. Check the USB cable, switch it on, and close other MIDI apps.");
   let loader = dev;
-  if (dev.id === PRODUCT) {
-    dev.link.close();
-    fail("xebec", "Xebec is running. It cannot take an update over USB yet: switch the FM-1 off, hold OCT- and OCT+ while switching it on, then press Install again.");
-  }
   if (!isLoader(dev.id)) {
     step("staging", dev.id);
     dev.link.send(UPGRADE);

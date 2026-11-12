@@ -46,7 +46,7 @@ Status: ✅ done · 🔨 in progress · ⬜ to do
   - 0.0.6: the CORE 0 line becomes CPU, core 0's clock measured against TIMER4 (24 MHz crystal) with 1,000,000 dependent adds from RAM; an FM-1 shows 360 MHz, M-VAVE's boot configuration's `SYS_CLK` (fm1-emu runs at 240)
 - ✅ Way back to the official firmware, tested: OCT- + OCT+ at power-on, then M-VAVE's FM-1_015 from the installer page (done on an FM-1 with 0.0.4)
 - ✅ Install detection: Xebec answers the identity question over USB-MIDI (`FM-1_47932320`), and the installer page confirms Xebec runs after an install
-- ⬜ Later: answer the update protocol over USB-MIDI, so installers can update Xebec without a key held
+- 🔨 Update over USB-MIDI, no key held: on the installer's UPGRADE, Xebec reads the package's UFW head, loader and flash head with read requests, refuses another board's package, a different loader or a different flash head, and stages the loader only after the installer confirms (`update_usb.c`, native test against a simulated installer in CI); to be tried on an FM-1
 
 *The first milestone that goes onto a real FM-1.*
 
@@ -65,6 +65,7 @@ Status: ✅ done · 🔨 in progress · ⬜ to do
 ### 5. USB and MIDI 🔨
 
 - 🔨 USB-MIDI device, polled: enumerates as "FM-1 Xebec" (pid.codes test ids `1209:0001`), SysEx in and out; notes and other MIDI to follow
+  - Rule: no loop may spin on a peripheral register while USB is in use. Spinning on the SIE or TIMER4 starved the USB DMA: the host saw babble (`urb status -75`) on Xebec's replies and reset the port. Between polls the CPU waits on itself (`cpu_wait`, a nop loop from the cache)
   - The boot screen's USB line turns OK once a computer has configured the FM-1; every build checks enumeration and the identity reply against fm1-emu's USB host
   - Confirmed on an FM-1 with 0.0.7: the USB line shows OK
 - ⬜ USB audio

@@ -36,14 +36,14 @@
 
   <section class="warn">
     <h2>Before you install</h2>
-    <p>This is an early test build. Xebec shows its boot screen and answers this page over USB, nothing more: no sound and no keys yet.</p>
+    <p>This is an early test build. Xebec shows its boot screen and takes updates from this page over USB, nothing more: no sound and no keys yet.</p>
     <p>To go back: hold <b>OCT-</b> and <b>OCT+</b> while switching the FM-1 on. It starts M-VAVE's update loader, and this page can then put M-VAVE's firmware back (below). From there, install your usual firmware from its own page.</p>
   </section>
 
   <section>
     <h2>Install Xebec</h2>
     <ol>
-      <li>Connect the FM-1 by USB and switch it on, running its current firmware (one with a web installer, like Manta or Tuna).</li>
+      <li>Connect the FM-1 by USB and switch it on, running its current firmware (Xebec, or one with a web installer, like Manta or Tuna).</li>
       <li>Use Chrome or Edge, close other MIDI apps, and allow MIDI access when asked.</li>
       <li>Press Install and keep this page open until it says done (about two minutes).</li>
     </ol>
@@ -54,7 +54,7 @@
 
   <section>
     <h2>Back to M-VAVE's firmware</h2>
-    <p>With the FM-1 in update mode (OCT- and OCT+ held at power-on), choose M-VAVE's stock package
+    <p>With Xebec running, or the FM-1 in update mode (OCT- and OCT+ held at power-on), choose M-VAVE's stock package
       <a href="https://github.com/m-vave/fm1_open/raw/4c7496daac04a95ff10d1afdcc8f9ead2dbabc41/sdk/firmware/FM-1_015.fwsc">FM-1_015.fwsc</a>.
       It also puts M-VAVE's factory patches back, replacing the ones on the FM-1.</p>
     <input type="file" id="stock" accept=".fwsc">
