@@ -15,6 +15,8 @@
 #include "../board/flash.h"
 #include "../board/keys.h"
 #include "../board/clock.h"
+#include "../board/usb.h"
+#include "sysex.h"
 #include "update.h"
 #include "delay.h"
 #include "text.h"
@@ -37,8 +39,9 @@
 #define TITLE_Y      20u
 #define VERSION_Y    64u
 #define RULE_Y       90u
-#define CHECK_Y0    104u
-#define CHECK_STEP   24u
+#define CHECK_Y0    100u
+#define CHECK_STEP   20u
+#define READY_Y     222u
 #define LABEL_X      12u
 #define RESULT_X    204u
 
@@ -64,17 +67,24 @@ static void check(const char *label, int ok)
     check_line++;
 }
 
-/* A check line with a value instead of OK, right-aligned where OK ends. */
-static void check_value(const char *label, const char *value, int ok)
+/* A line's value, right-aligned where OK ends, over whatever was there. */
+static void line_value(unsigned line, const char *value, uint16_t colour)
 {
-    unsigned y = CHECK_Y0 + check_line * CHECK_STEP;
+    unsigned y = CHECK_Y0 + line * CHECK_STEP;
     unsigned right = RESULT_X + xb_text_width("OK", 2);
 
-    xb_text_draw(LABEL_X, y, label, 2, XB_COLOUR_TEXT, XB_COLOUR_SEA);
+    xb_lcd_fill(RESULT_X - 60u, y, right - (RESULT_X - 60u), 14u, XB_COLOUR_SEA);
+    xb_text_draw(right - xb_text_width(value, 2), y, value, 2, colour, XB_COLOUR_SEA);
+}
+
+/* A check line with a value instead of OK. */
+static void check_value(const char *label, const char *value, int ok)
+{
+    xb_text_draw(LABEL_X, CHECK_Y0 + check_line * CHECK_STEP, label, 2, XB_COLOUR_TEXT, XB_COLOUR_SEA);
     if (ok)
-        xb_text_draw(right - xb_text_width(value, 2), y, value, 2, XB_COLOUR_OK, XB_COLOUR_SEA);
+        line_value(check_line, value, XB_COLOUR_OK);
     else
-        xb_text_draw(RESULT_X - 24u, y, "FAIL", 2, XB_COLOUR_FAIL, XB_COLOUR_SEA);
+        line_value(check_line, "FAIL", XB_COLOUR_FAIL);
     check_line++;
 }
 
@@ -118,11 +128,11 @@ static void update_mode(void)
     rc = xb_update_prepare();
     check("LOADER", rc == XB_FLASH_OK);
     if (rc != XB_FLASH_OK) {
-        centred(208u, "UPDATE FAILED");
+        centred(READY_Y, "UPDATE FAILED");
         for (;;)
             ;
     }
-    centred(208u, "RESTART");
+    centred(READY_Y, "RESTART");
     xb_delay_ms(300);
     xb_update_restart();
 }
@@ -158,20 +168,41 @@ void xb_main(void)
         mhz_text(text, mhz);
         check_value("CPU", text, mhz >= 24u && mhz <= 1000u);
     }
-    if (flash_check()) {
-        int rc;
+    {
+        int flash = flash_check(), rc = 0;
+        unsigned usb_line;
+        int shown = 0;
+        uint32_t tried;
 
-        check("FLASH", 1);
+        check("FLASH", flash);
+        /* USB: "--" until the computer has configured the FM-1. */
+        usb_line = check_line;
+        check_value("USB", "--", 1);
+        line_value(usb_line, "--", XB_COLOUR_TEXT);
         /* Only shown when an earlier update left something to clear. */
-        rc = xb_update_cleanup();
+        if (flash)
+            rc = xb_update_cleanup();
         if (rc)
             check("CLEANUP", rc > 0);
-    } else {
-        check("FLASH", 0);
+
+        centred(READY_Y, "READY");
+
+        xb_usb_start();
+        tried = xb_ticks();
+        for (;;) {
+            int now;
+
+            xb_usb_poll();
+            xb_sysex_service();
+            now = xb_usb_configured();
+            if (now != shown) {
+                shown = now;
+                line_value(usb_line, now ? "OK" : "--", now ? XB_COLOUR_OK : XB_COLOUR_TEXT);
+            }
+            if (!xb_usb_up() && xb_ticks() - tried > 24000000u) {   /* no cable: try once a second */
+                xb_usb_start();
+                tried = xb_ticks();
+            }
+        }
     }
-
-    centred(208u, "READY");
-
-    for (;;)
-        ;
 }

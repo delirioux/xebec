@@ -47,19 +47,24 @@ jobs:
           ls -l build/xebec_app.bin
           "$JIELI_TOOLCHAIN/common/bin/objdump" -h build/xebec.elf || true
 
-      - name: fm1-emu (pinned)
+      - name: fm1-emu and fm1-live (pinned)
         uses: actions/cache@v6
         id: emu-cache
         with:
-          path: emu/target/release/fm1-emu
-          key: fm1-emu-${{ env.FM1_EMU_COMMIT }}
+          path: |
+            emu/target/release/fm1-emu
+            emu/target/release/fm1-live
+          key: fm1-emu-live-${{ env.FM1_EMU_COMMIT }}
 
-      - name: Build fm1-emu
+      - name: ALSA libraries for fm1-live
+        run: sudo apt-get install -y libasound2-dev
+
+      - name: Build fm1-emu and fm1-live
         if: steps.emu-cache.outputs.cache-hit != 'true'
         run: |
           git clone https://github.com/joakimeriksson/fm1-emu emu
           git -C emu checkout "$FM1_EMU_COMMIT"
-          cargo build --release -p fm1-emu --manifest-path emu/Cargo.toml
+          cargo build --release -p fm1-emu -p fm1-live --manifest-path emu/Cargo.toml
 
       - name: Flash driver RAM code stays in RAM
         run: |
@@ -75,6 +80,9 @@ jobs:
           emu/target/release/fm1-emu --bin build/xebec_xip.bin --entry 0x02000120 \
               --ms 2000 --snap 1900 --steps 2000000000 --quiet | tail -n 20
           python3 tools/check_boot_screen.py work/lcd_1900.bmp "$(git rev-parse --short=7 HEAD | tr 'a-f' 'A-F')" 240
+
+      - name: USB in fm1-emu (enumeration, identity, USB line)
+        run: python3 tools/check_usb.py emu/target/release/fm1-live build/xebec_xip.bin "$(git rev-parse --short=7 HEAD | tr 'a-f' 'A-F')"
 
       - name: Update path in fm1-emu (update keys, one key, leftover staging)
         run: python3 tools/check_update_path.py emu/target/release/fm1-emu build/xebec_xip.bin build/xebec.elf work

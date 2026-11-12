@@ -43,8 +43,9 @@ Status: ✅ done · 🔨 in progress · ⬜ to do
 - ✅ First install on a real FM-1, display bring-up confirmed
   - 0.0.4 installed from Manta and booted: backlight on, but no picture (SPI1 was not routed to the display pins nor set as master); update mode, the flash driver and the hand-over to M-VAVE's loader all worked on hardware
   - 0.0.5: SPI1 routing and master mode as M-VAVE's SDK and Felucca set them; the boot screen shows on an FM-1, every check OK
-  - 0.0.6: the CORE 0 line becomes CPU, core 0's clock measured against TIMER4 (24 MHz crystal) with 1,000,000 dependent adds from RAM
+  - 0.0.6: the CORE 0 line becomes CPU, core 0's clock measured against TIMER4 (24 MHz crystal) with 1,000,000 dependent adds from RAM; an FM-1 shows 360 MHz, M-VAVE's boot configuration's `SYS_CLK` (fm1-emu runs at 240)
 - ✅ Way back to the official firmware, tested: OCT- + OCT+ at power-on, then M-VAVE's FM-1_015 from the installer page (done on an FM-1 with 0.0.4)
+- ✅ Install detection: Xebec answers the identity question over USB-MIDI (`FM-1_47932320`), and the installer page confirms Xebec runs after an install
 - ⬜ Later: answer the update protocol over USB-MIDI, so installers can update Xebec without a key held
 
 *The first milestone that goes onto a real FM-1.*
@@ -61,9 +62,10 @@ Status: ✅ done · 🔨 in progress · ⬜ to do
 - ⬜ Audio output to the FM-1's DAC
 - ⬜ A single sine, clean and steady
 
-### 5. USB and MIDI ⬜
+### 5. USB and MIDI 🔨
 
-- ⬜ USB-MIDI in and out
+- 🔨 USB-MIDI device, polled: enumerates as "FM-1 Xebec" (pid.codes test ids `1209:0001`), SysEx in and out; notes and other MIDI to follow
+  - The boot screen's USB line turns OK once a computer has configured the FM-1; every build checks enumeration and the identity reply against fm1-emu's USB host
 - ⬜ USB audio
 - ⬜ TRS MIDI input
 

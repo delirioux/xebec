@@ -74,6 +74,19 @@
 /* The update record the boot loader reads after a reset (112 bytes). */
 #define XB_UPDATE_RECORD_RAM 0x01C7FD88u
 
+/* USB0: a Mentor MUSB full-speed core behind JieLi's window (Felucca's
+ * fm1_usb.h and fm1-emu's model). CON1 reaches the core's own registers
+ * one byte at a time; endpoint packets move by DMA to and from RAM. */
+#define XB_USB_CON0       XB_REG32(0x11800u)
+#define XB_USB_CON1       XB_REG32(0x11804u)
+#define XB_USB_EP_CNT(n)  XB_REG32(0x11808u + 4u * (n))           /* EP0..3 */
+#define XB_USB_EP0_ADR    XB_REG32(0x11818u)
+#define XB_USB_EP_TADR(n) XB_REG32(0x1181Cu + 8u * ((n) - 1u))    /* EP1..3 */
+#define XB_USB_EP_RADR(n) XB_REG32(0x11820u + 8u * ((n) - 1u))    /* EP1..3 */
+#define XB_USB_EP4_RADR   XB_REG32(0x1183Cu)
+#define XB_USB_IO_CON0    XB_REG32(0x51000u)                      /* bit 6: D+ pull-up */
+#define XB_CLK_CON1       XB_REG32(0x10010u)                      /* bits 1:0 = 0: USB on PLL48M */
+
 /* The external NOR flash (1 MiB). Normally the SFC owns it and maps it at
  * XIP 0x02000000 (flash offset 0x4000 and up); to erase or program, the SFC
  * is switched off, the pins go back to SPI0 and chip select to PD0 as a

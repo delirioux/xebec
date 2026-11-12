@@ -36,7 +36,7 @@
 
   <section class="warn">
     <h2>Before you install</h2>
-    <p>This is an early test build. Xebec shows its boot screen and nothing more: no sound, no keys, no USB yet.</p>
+    <p>This is an early test build. Xebec shows its boot screen and answers this page over USB, nothing more: no sound and no keys yet.</p>
     <p>To go back: hold <b>OCT-</b> and <b>OCT+</b> while switching the FM-1 on. It starts M-VAVE's update loader, and this page can then put M-VAVE's firmware back (below). From there, install your usual firmware from its own page.</p>
   </section>
 
@@ -71,7 +71,10 @@ const STEPS = {
   staging: (id) => `${id} checks the package and sets up the update loader...`,
   restart: () => "The FM-1 restarts into the update loader...",
   writing: () => "The update loader writes Xebec. Do not unplug or switch off...",
-  done: () => "Done. The FM-1 restarts into Xebec: its screen shows XEBEC and the boot checks. Xebec has no USB yet, so this page cannot check it for you.",
+  done: () => "Done. The FM-1 restarts with the installed firmware.",
+  starting: () => "Written. The FM-1 restarts into Xebec...",
+  running: (id) => `Xebec is running (${id}). Its screen shows the boot checks, with USB OK.`,
+  unconfirmed: () => "Written, but Xebec did not answer over USB. Look at the FM-1's screen: XEBEC and the boot checks mean it runs.",
 };
 
 async function midi() {
@@ -89,9 +92,9 @@ async function run(pkgBytes, expectSha, status) {
     const access = await midi();
     bar.hidden = false; bar.value = 0;
     await install(access, pkg, (step, id, part) => {
-      say(status, STEPS[step](id), step === "done" ? "ok" : "");
+      say(status, STEPS[step](id), step === "done" || step === "running" ? "ok" : "");
       if (part !== undefined) bar.value = part;
-      if (step === "done") bar.value = 1;
+      if (["done", "starting", "running", "unconfirmed"].includes(step)) bar.value = 1;
     });
   } catch (e) {
     say(status, e.message, "bad");

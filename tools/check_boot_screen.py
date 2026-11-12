@@ -22,10 +22,11 @@ W = H = 240
 # Layout and colours: keep in step with firmware/src/main.c.
 SEA, TEXT, RULE, OK, FAIL = (0x00, 0x80, 0x80), (0xFF, 0xFF, 0xFF), (0x80, 0xC0, 0xC0), \
     (0x40, 0xFF, 0x40), (0xFF, 0x40, 0x40)
-TITLE_Y, VERSION_Y, RULE_Y, CHECK_Y0, CHECK_STEP = 20, 64, 90, 104, 24
-LABEL_X, RESULT_X, READY_Y = 12, 204, 208
-CHECKS = ["DISPLAY", "RAM 64K", "CPU", "FLASH"]
+TITLE_Y, VERSION_Y, RULE_Y, CHECK_Y0, CHECK_STEP = 20, 64, 90, 100, 20
+LABEL_X, RESULT_X, READY_Y = 12, 204, 222
+CHECKS = ["DISPLAY", "RAM 64K", "CPU", "FLASH", "USB"]
 VALUE_CHECKS = {"CPU": lambda n: f"{n}MHZ"}      # drawn with a measured value instead of OK
+# USB shows "--" (white) until a computer configures the FM-1; fm1-emu has no cable here
 
 
 def rgb565_shown(rgb):
@@ -77,7 +78,7 @@ class Screen:
         self.text((W - self.width(text, scale)) // 2, y, text, scale, fg, SEA)
 
 
-def expected(build, fail_ram=False, values=None):
+def expected(build, fail_ram=False, values=None, usb_ok=False):
     s = Screen(load_font())
     values = values or {}
     s.centred(TITLE_Y, "XEBEC", 4, TEXT)
@@ -91,6 +92,8 @@ def expected(build, fail_ram=False, values=None):
         elif label in VALUE_CHECKS:
             text = values.get(label, "")
             s.text(RESULT_X + s.width("OK", 2) - s.width(text, 2), y, text, 2, OK, SEA)
+        elif label == "USB" and not usb_ok:
+            s.text(RESULT_X + s.width("OK", 2) - s.width("--", 2), y, "--", 2, TEXT, SEA)
         else:
             s.text(RESULT_X, y, "OK", 2, OK, SEA)
     s.centred(READY_Y, "READY", 2, TEXT)
