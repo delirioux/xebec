@@ -235,7 +235,7 @@ export async function install(access, pkg, step = () => {}) {
     step("staging", dev.id);
     dev.link.send(UPGRADE);
     const stageBytes = 1024 + 0x4000 + pkg.loaderLen;      // UFW head, flash head, loader
-    try { await serve(dev.link, pkg.image, STAGED, 10000, (n) => step("staging", dev.id, Math.min(n / stageBytes, 0.99))); }
+    try { await serve(dev.link, pkg.image, STAGED, 10000, (n) => step("staging", dev.id, 0.1 * Math.min(n / stageBytes, 1))); }
     catch (e) {
       if (e.code === "stopped") fail("refused", `${dev.id} stopped before staging the loader: it refused the package, and nothing was written. Its screen shows why.`);
       throw e;
@@ -248,7 +248,7 @@ export async function install(access, pkg, step = () => {}) {
   step("writing", loader.id);
   loader.link.send(UPGRADE);
   const writeBytes = 1024 + pkg.flashLen;                    // UFW head, flash image
-  try { await serve(loader.link, pkg.image, WRITTEN, 180000, (n) => step("writing", loader.id, Math.min(n / writeBytes, 0.99))); }
+  try { await serve(loader.link, pkg.image, WRITTEN, 180000, (n) => step("writing", loader.id, 0.1 + 0.89 * Math.min(n / writeBytes, 1))); }
   finally { loader.link.close(); }
   if (pkg.id !== PRODUCT) { step("done"); return; }
   step("starting");
