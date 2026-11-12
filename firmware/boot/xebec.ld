@@ -69,6 +69,9 @@ SECTIONS
         *(.bss*)
         *(.sbss*)
         *(COMMON)
+        . = ALIGN(64);
+        __xb_usb_dma_start = .;
+        *(.xb_usb_dma)
         . = ALIGN(4);
         __xb_bss_end = .;
     } > RAM

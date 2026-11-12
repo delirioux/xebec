@@ -40,9 +40,13 @@ static const uint8_t STR0[4] = {4, 3, 0x09, 0x04};
 static const uint8_t STR1[20] = {20, 3, 'd', 0, 'e', 0, 'l', 0, 'i', 0, 'r', 0, 'i', 0, 'o', 0, 'u', 0, 'x', 0};
 static const uint8_t STR2[22] = {22, 3, 'F', 0, 'M', 0, '-', 0, '1', 0, ' ', 0, 'X', 0, 'e', 0, 'b', 0, 'e', 0, 'c', 0};
 
-static uint8_t ep0buf[68] __attribute__((aligned(4)));
-static uint8_t ep1tx[64] __attribute__((aligned(4)));
-static uint8_t ep1rx[68] __attribute__((aligned(4)));
+/* The DMA buffers sit together after all other data, as M-VAVE's SDK places its USB
+ * buffers (usb_data_begin .. usb_data_end at the end of RAM). */
+#define XB_USB_DMA __attribute__((section(".xb_usb_dma"), aligned(64)))
+
+static uint8_t ep0buf[68] XB_USB_DMA;
+static uint8_t ep1tx[64] XB_USB_DMA;
+static uint8_t ep1rx[68] XB_USB_DMA;
 static uint8_t zero2[2];
 
 uint32_t xb_usb_rx_count, xb_usb_tx_count;
