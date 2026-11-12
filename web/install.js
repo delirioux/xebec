@@ -12,6 +12,7 @@ const STAGED = 0xE0000000, WRITTEN = 0xF0000000;
 const SUCCESS = [...new TextEncoder().encode("success"), 0];
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const within = (p, ms) => Promise.race([p, new Promise((_, no) => setTimeout(() => no(new Error("timeout")), ms))]);
 const le = (p, at, n) => { let v = 0; for (let i = 0; i < n; i++) v += p[at + i] * 2 ** (8 * i); return v; };
 const ascii = (p) => String.fromCharCode(...p).replace(/\0.*$/s, "");
 export class InstallError extends Error {
@@ -200,7 +201,8 @@ export async function findDevice(access, want) {
     if (input.state === "disconnected" || !NAME.test(input.name || "")) continue;
     const output = outputs.find((o) => o.name === input.name && o.state !== "disconnected");
     if (!output) continue;
-    try { await input.open(); await output.open(); } catch { continue; }
+    // (a port that is still coming back from a USB reset may never finish opening)
+    try { await within(Promise.all([input.open(), output.open()]), 2000); } catch { continue; }
     const link = new Link(input, output);
     // Chrome on Linux can still be connecting the input when open() resolves, and the FM-1
     // answers within a few ms: give it a moment, and ask again if the first answer is missed.
@@ -209,6 +211,26 @@ export async function findDevice(access, want) {
     for (let i = 0; i < 3 && !id && !link.lost; i++) id = await link.identity(500);
     if (id && want(id)) return { link, id };
     link.close();
+  }
+  return null;
+}
+
+// Running Xebec to its update loader: UPGRADE, then look again. As long as Xebec still answers,
+// the UPGRADE did not arrive (a USB reset can swallow it): send it again. Done when the loader answers.
+async function xebecToLoader(access, dev, step) {
+  const end = Date.now() + 45000;
+  let d = dev;
+  while (Date.now() < end) {
+    if (d && isLoader(d.id)) return d;
+    if (d) {
+      try { d.link.send(UPGRADE); } catch { /* dropped off the bus: look again */ }
+      d.link.close();
+      step("restart", dev.id, 0.1);
+      await sleep(2000);                   // staging the loader and the restart take about a second
+    } else {
+      await sleep(1000);
+    }
+    d = await findDevice(access, (id) => id === PRODUCT || isLoader(id));
   }
   return null;
 }
@@ -228,19 +250,16 @@ const isLoader = (id) => /^ota-/i.test(id);
 // The whole install. From a running firmware: it stages the loader (step 1), then the loader
 // writes the package (step 2). From the loader (update mode, or an install cut off): step 2 only.
 export async function install(access, pkg, step = () => {}) {
-  const dev = await findDevice(access, (id) => /^FM-1_/.test(id) || isLoader(id));
+  // Xebec's replies sometimes end in a USB reset (the FM-1 drops off the bus for a moment):
+  // keep looking for a while instead of giving up on the first lost answer.
+  const dev = await waitDevice(access, (id) => /^FM-1_/.test(id) || isLoader(id), 30000);
   if (!dev) fail("notfound", "No FM-1 found. Check the USB cable, switch it on, and close other MIDI apps.");
   let loader = dev;
   if (dev.id === PRODUCT) {
     // Xebec stages its own loader on UPGRADE and restarts, without reading the package
     // (its replies over USB are not reliable yet); this page checked the package already.
     step("staging", dev.id, 0.05);
-    dev.link.send(UPGRADE);
-    await sleep(500);
-    dev.link.close();
-    step("restart", dev.id, 0.1);
-    await sleep(3000);
-    loader = await waitDevice(access, isLoader, 40000);
+    loader = await xebecToLoader(access, dev, step);
     if (!loader) fail("noloader", "The update loader did not appear. Unplug and replug the USB cable, then press Install again: the FM-1 stays in update mode until it is done.");
   } else if (!isLoader(dev.id)) {
     step("staging", dev.id);
