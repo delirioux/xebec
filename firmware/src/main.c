@@ -69,12 +69,13 @@ static void check(const char *label, int ok)
 }
 
 /* Diagnostics at the top: USB transfers in, identity questions, transfers out. */
-/* About 250 us at 360 MHz without touching any bus: the loop runs from the instruction cache. */
+/* About 500 us at 360 MHz (a 2 kHz poll, as Felucca's) without touching any bus:
+ * the loop runs from the instruction cache. */
 static void cpu_wait(void)
 {
     uint32_t i;
 
-    for (i = 0; i < 40000u; i++)
+    for (i = 0; i < 80000u; i++)
         __asm__ volatile("nop");
 }
 #define DIAG_Y 3u            /* above the title, clear of every check line */
@@ -254,7 +255,7 @@ static void usb_update(void)
             usb_idle();
     }
     centred(READY_Y, "RESTART");
-    for (i = 0; i < 1200u; i++)            /* about 300 ms, USB still served */
+    for (i = 0; i < 600u; i++)             /* about 300 ms, USB still served */
         usb_idle();
     xb_update_restart();
 }

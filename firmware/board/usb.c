@@ -360,6 +360,8 @@ void xb_usb_poll(void)
 
     if (!usb.up)
         return;
+    if (XB_USB_CON0 & (1u << 13))          /* SOF pending: clear it each poll, as Felucca does */
+        XB_USB_CON0 |= 1u << 12;
     iu = sie_rd(S_INTRUSB);
     it = sie_rd(S_INTRTX1);
     ir = sie_rd(S_INTRRX1);
