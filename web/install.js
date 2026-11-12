@@ -202,7 +202,11 @@ export async function findDevice(access, want) {
     if (!output) continue;
     try { await input.open(); await output.open(); } catch { continue; }
     const link = new Link(input, output);
-    const id = await link.identity();
+    // Chrome on Linux can still be connecting the input when open() resolves, and the FM-1
+    // answers within a few ms: give it a moment, and ask again if the first answer is missed.
+    await sleep(200);
+    let id = null;
+    for (let i = 0; i < 3 && !id && !link.lost; i++) id = await link.identity(500);
     if (id && want(id)) return { link, id };
     link.close();
   }
