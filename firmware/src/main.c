@@ -68,6 +68,7 @@ static void check(const char *label, int ok)
 }
 
 /* Diagnostics at the top: USB transfers in, identity questions, transfers out. */
+#define USB_POLL_TICKS 6000u                 /* 250 us of 24 MHz timer ticks */
 #define DIAG_Y 3u            /* above the title, clear of every check line */
 
 static void num_text(char *out, uint32_t v)
@@ -217,7 +218,7 @@ void xb_main(void)
         int flash = flash_check(), rc = 0;
         unsigned usb_line;
         int shown = 0;
-        uint32_t tried, diag = 0xFFFFFFFFu;
+        uint32_t tried, polled, diag = 0xFFFFFFFFu;
 
         check("FLASH", flash);
         /* USB: "--" until the computer has configured the FM-1. */
@@ -234,9 +235,15 @@ void xb_main(void)
 
         xb_usb_start();
         tried = xb_ticks();
+        polled = tried;
         for (;;) {
             int now;
 
+            /* The USB controller at a fixed 4 kHz, like Felucca's timer-driven poll: polled
+             * flat out, the host saw babble (EOVERFLOW) and dropped the port after a reply. */
+            if (xb_ticks() - polled < USB_POLL_TICKS)
+                continue;
+            polled = xb_ticks();
             xb_usb_poll();
             xb_sysex_service();
             now = xb_usb_configured();
