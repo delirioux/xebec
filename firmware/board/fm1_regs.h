@@ -114,6 +114,17 @@
 #define XB_CACHE_CON      XB_REG32(0x1EEE008u)
 #define XB_CACHE_IDLE     (1u << 14)
 
+/* Core 1 and the debug unit (Melodee's and Felucca's notes). C1_CON bit 1 holds
+ * core 1, bit 3 lets it run. DBG_WR_EN bit 0 = unlocked; writing 0xE7 toggles it. */
+#define XB_C1_CON         XB_REG32(0x1EEE004u)
+#define XB_C1_HOLD        (1u << 1)
+#define XB_C1_RUN         (1u << 3)
+#define XB_DBG_WR_EN      XB_REG32(0x1EEE240u)
+#define XB_DBG_MSG_CLR    XB_REG32(0x1EEE248u)
+#define XB_DBG_EN         XB_REG32(0x1EEE340u)
+#define XB_DBG_UNLOCK     0xE7u
+#define XB_DBG_BUS_TRAPS  0x003F0030u
+
 /* XIP address of a flash offset (offsets below 0x4000 are not mapped). */
 #define XB_FLASH_XIP(off) (0x02000000u + (uint32_t)(off) - 0x4000u)
 

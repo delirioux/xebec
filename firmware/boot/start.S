@@ -16,6 +16,7 @@ xb_start:
 1:	cli
 	sp = __xb_stack_top
 	ssp = __xb_sys_stack_top
+	call xb_core1_hold	/* core 1 held first: it may still run an earlier firmware */
 	call xb_crt_init
 	call xb_main
 	/* xb_main never returns; if it does, park here */
