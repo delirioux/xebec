@@ -12,7 +12,7 @@ Status: ✅ done · 🔨 in progress · ⬜ to do
 - ✅ Own start-up code, memory layout and C runtime
 - ✅ Own display driver (ST7789V on SPI1)
 - ✅ The screen shows one colour, checked pixel for pixel in fm1-emu on every build
-- 🔨 Boot test screen: name, version and build code, then the boot checks line by line (display, RAM, core 0, flash), in Xebec's own font
+- ✅ Boot test screen: name, version and build code, then the boot checks line by line (display, RAM, core 0, flash), in Xebec's own font (confirmed on an FM-1 with 0.0.5)
 
 *Proven in fm1-emu. The first check on a real FM-1 comes with milestone 2.*
 
@@ -40,9 +40,9 @@ Status: ✅ done · 🔨 in progress · ⬜ to do
   - Every build checks it against M-VAVE's package fetched from M-VAVE's repository, checks the write window (`0xE0000`–`0xE5000`, inside VM, past the package, clear of BTIF, the patches and key_mac), and boots the package in fm1-emu to the boot screen
 - ✅ Installer page (GitHub Pages, `dev/`): Web MIDI, both update steps, only packages that keep M-VAVE's boot loader and loader; also puts M-VAVE's stock firmware back from update mode
   - Tested against Manta's own update code: it accepts Xebec's package and stages the loader byte for byte as Xebec's update mode does, and refuses a package whose head does not match the FM-1's without writing anything
-- 🔨 First install on a real FM-1, display bring-up confirmed
+- ✅ First install on a real FM-1, display bring-up confirmed
   - 0.0.4 installed from Manta and booted: backlight on, but no picture (SPI1 was not routed to the display pins nor set as master); update mode, the flash driver and the hand-over to M-VAVE's loader all worked on hardware
-  - 0.0.5: SPI1 routing and master mode as M-VAVE's SDK and Felucca set them
+  - 0.0.5: SPI1 routing and master mode as M-VAVE's SDK and Felucca set them; the boot screen shows on an FM-1, every check OK
 - ✅ Way back to the official firmware, tested: OCT- + OCT+ at power-on, then M-VAVE's FM-1_015 from the installer page (done on an FM-1 with 0.0.4)
 - ⬜ Later: answer the update protocol over USB-MIDI, so installers can update Xebec without a key held
 
