@@ -128,7 +128,7 @@ int xb_usb_start(void)
     XB_USB_IO_CON0 |= 0x40u;
     XB_USB_CON0 |= 0x3Cu;
 
-    sie_wr(S_POWER, 0x60);
+    sie_wr(S_POWER, 0x40);                 /* soft connect only, as M-VAVE's SDK: no high-speed enable (bit 5), the chip is full speed */
     sie_wr(S_INTRUSBE, 0x07);
     sie_wr(S_INTRTX1E, 0x01);
     sie_wr(S_INTRTX2E, 0);
