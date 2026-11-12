@@ -7,6 +7,7 @@
 """
 import hashlib
 import os
+import re
 import shutil
 import sys
 
@@ -32,14 +33,16 @@ def main():
     os.makedirs(dev)
     sha = hashlib.sha256(open(pkg, "rb").read()).hexdigest()
     page = open(os.path.join(ROOT, "web", "index.html")).read()
-    if "__SHA256__" not in page or "__BUILD__" not in page:
-        sys.exit("web/index.html: placeholders missing")
-    open(os.path.join(dev, "index.html"), "w").write(page.replace("__SHA256__", sha).replace("__BUILD__", build))
+    m = re.search(r'#define XB_VERSION\s+"([^"]+)"', open(os.path.join(ROOT, "firmware", "src", "version.h")).read())
+    if not m or any(k not in page for k in ("__SHA256__", "__BUILD__", "__VERSION__")):
+        sys.exit("web/index.html or version.h: placeholders or version missing")
+    page = page.replace("__SHA256__", sha).replace("__BUILD__", build).replace("__VERSION__", m.group(1))
+    open(os.path.join(dev, "index.html"), "w").write(page)
     shutil.copy(os.path.join(ROOT, "web", "install.js"), dev)
     shutil.copy(os.path.join(ROOT, "docs", "logo.png"), os.path.join(dev, "logo.png"))
     shutil.copy(pkg, os.path.join(dev, "xebec.fwsc"))
     open(os.path.join(out, "index.html"), "w").write(LANDING)
-    print(f"{out}: root page, dev/ installer for build {build} (package sha256 {sha})")
+    print(f"{out}: root page, dev/ installer for version {m.group(1)}, build {build} (package sha256 {sha})")
 
 
 if __name__ == "__main__":

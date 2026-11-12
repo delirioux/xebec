@@ -66,6 +66,7 @@ Status: ✅ done · 🔨 in progress · ⬜ to do
 
 - 🔨 USB-MIDI device, polled: enumerates as "FM-1 Xebec" (pid.codes test ids `1209:0001`), SysEx in and out; notes and other MIDI to follow
   - The boot screen's USB line turns OK once a computer has configured the FM-1; every build checks enumeration and the identity reply against fm1-emu's USB host
+  - Confirmed on an FM-1 with 0.0.7: the USB line shows OK
 - ⬜ USB audio
 - ⬜ TRS MIDI input
 
