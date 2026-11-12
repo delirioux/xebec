@@ -39,6 +39,7 @@ Status: ✅ done · 🔨 in progress · ⬜ to do
   - Identity `FM-1_47932320`, in the range of Xebec's sister firmwares
   - Every build checks it against M-VAVE's package fetched from M-VAVE's repository, checks the write window (`0xE0000`–`0xE5000`, inside VM, past the package, clear of BTIF, the patches and key_mac), and boots the package in fm1-emu to the boot screen
 - ✅ Installer page (GitHub Pages, `dev/`): Web MIDI, both update steps, only packages that keep M-VAVE's boot loader and loader; also puts M-VAVE's stock firmware back from update mode
+  - 0.0.27: off the USB bus (controller off, D+ pull-up off, 30 ms) before the restart into the loader, as Felucca does; before, the loader started on a controller still in Xebec's state and its session stalled
   - Tested against Manta's own update code: it accepts Xebec's package and stages the loader byte for byte as Xebec's update mode does, and refuses a package whose head does not match the FM-1's without writing anything
 - ✅ First install on a real FM-1, display bring-up confirmed
   - 0.0.4 installed from Manta and booted: backlight on, but no picture (SPI1 was not routed to the display pins nor set as master); update mode, the flash driver and the hand-over to M-VAVE's loader all worked on hardware

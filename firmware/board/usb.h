@@ -29,4 +29,8 @@ extern uint32_t xb_usb_sie_timeouts, xb_usb_starts, xb_usb_bus_resets;
 int xb_usb_midi_send(uint32_t pkt);           /* 0 = queued, < 0 = queue full */
 int xb_usb_midi_take(uint32_t *pkt);          /* 1 = got one */
 
+/* Off the bus, as before a restart into the update loader: the loader must find the
+ * controller off and the computer must have seen the FM-1 leave, or its session stalls. */
+void xb_usb_detach(void);
+
 #endif

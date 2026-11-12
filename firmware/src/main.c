@@ -265,6 +265,8 @@ static void usb_update(void)
     centred(READY_Y, "RESTART");
     for (i = 0; i < 600u; i++)             /* about 300 ms, USB still served */
         usb_idle();
+    xb_usb_detach();                       /* off the bus first, as Felucca does before its update reset */
+    xb_delay_ms(30);
     xb_update_restart();
 }
 

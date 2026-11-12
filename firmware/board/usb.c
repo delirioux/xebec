@@ -140,6 +140,14 @@ int xb_usb_start(void)
     return usb.up ? 0 : -1;
 }
 
+void xb_usb_detach(void)
+{
+    usb.up = 0;
+    usb.config = 0;
+    XB_USB_CON0 = 0;                       /* controller off */
+    XB_USB_IO_CON0 = 0x0Cu;                /* D+ pull-up off: the computer sees the FM-1 leave the bus */
+}
+
 int xb_usb_up(void)
 {
     return usb.up;
