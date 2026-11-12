@@ -85,7 +85,8 @@ def main():
     got = read_ppm(os.path.join("work", "lcd.ppm"))
     mhz = screen.find_value(got, "CPU", 24, 1000)
     want = screen.expected(build, values={"CPU": f"{mhz}MHZ"}, usb_ok=True)
-    wrong = sum(1 for y in range(screen.H) for x in range(screen.W)
+    diag = range(6, 14)                # the diagnostics line (USB counters), not checked here
+    wrong = sum(1 for y in range(screen.H) if y not in diag for x in range(screen.W)
                 if any(abs(a - b) > 2 for a, b in zip(got[y][x], want[y][x])))
     print(f"screen at 3 s: {wrong} pixels differ from the boot screen with USB OK")
     if mhz is None or wrong:

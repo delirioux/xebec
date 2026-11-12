@@ -67,6 +67,51 @@ static void check(const char *label, int ok)
     check_line++;
 }
 
+/* Diagnostics at the top: USB transfers in, identity questions, transfers out. */
+#define DIAG_Y 6u            /* above the title, clear of every check line */
+
+static void num_text(char *out, uint32_t v)
+{
+    char tmp[10];
+    unsigned n = 0, i = 0;
+
+    do {
+        uint32_t q = 0;
+
+        while (v >= 10u) {           /* v / 10 without a divide, fine for small counts */
+            v -= 10u;
+            q++;
+        }
+        tmp[n++] = (char)('0' + v);
+        v = q;
+    } while (v && n < sizeof tmp);
+    while (n)
+        out[i++] = tmp[--n];
+    out[i] = 0;
+}
+
+static void diag_draw(void)
+{
+    char line[40], num[12];
+    const char *parts[3] = { "RX ", "  ID ", "  TX " };
+    uint32_t vals[3];
+    unsigned i, k, n = 0;
+
+    vals[0] = xb_usb_rx_count;
+    vals[1] = xb_sysex_identities;
+    vals[2] = xb_usb_tx_count;
+    for (i = 0; i < 3u; i++) {
+        for (k = 0; parts[i][k]; k++)
+            line[n++] = parts[i][k];
+        num_text(num, vals[i]);
+        for (k = 0; num[k]; k++)
+            line[n++] = num[k];
+    }
+    line[n] = 0;
+    xb_lcd_fill(LABEL_X, DIAG_Y, XB_LCD_W - 2u * LABEL_X, 8u, XB_COLOUR_SEA);
+    xb_text_draw(LABEL_X, DIAG_Y, line, 1, XB_COLOUR_TEXT, XB_COLOUR_SEA);
+}
+
 /* A line's value, right-aligned where OK ends, over whatever was there. */
 static void line_value(unsigned line, const char *value, uint16_t colour)
 {
@@ -172,7 +217,7 @@ void xb_main(void)
         int flash = flash_check(), rc = 0;
         unsigned usb_line;
         int shown = 0;
-        uint32_t tried;
+        uint32_t tried, diag = 0xFFFFFFFFu;
 
         check("FLASH", flash);
         /* USB: "--" until the computer has configured the FM-1. */
@@ -198,6 +243,10 @@ void xb_main(void)
             if (now != shown) {
                 shown = now;
                 line_value(usb_line, now ? "OK" : "--", now ? XB_COLOUR_OK : XB_COLOUR_TEXT);
+            }
+            if (now && diag != xb_usb_rx_count + 1000u * xb_sysex_identities + 1000000u * xb_usb_tx_count) {
+                diag = xb_usb_rx_count + 1000u * xb_sysex_identities + 1000000u * xb_usb_tx_count;
+                diag_draw();
             }
             if (!xb_usb_up() && xb_ticks() - tried > 24000000u) {   /* no cable: try once a second */
                 xb_usb_start();

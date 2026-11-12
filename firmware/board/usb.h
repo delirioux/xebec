@@ -20,6 +20,9 @@ int xb_usb_up(void);
 /* 1 once the computer has configured the device. */
 int xb_usb_configured(void);
 
+/* Bulk transfers on EP1 so far (diagnostics). */
+extern uint32_t xb_usb_rx_count, xb_usb_tx_count;
+
 /* USB-MIDI event packets (4 bytes, cable 0) to and from the computer. */
 int xb_usb_midi_send(uint32_t pkt);           /* 0 = queued, < 0 = queue full */
 int xb_usb_midi_take(uint32_t *pkt);          /* 1 = got one */

@@ -45,6 +45,8 @@ static uint8_t ep1tx[64] __attribute__((aligned(4)));
 static uint8_t ep1rx[68] __attribute__((aligned(4)));
 static uint8_t zero2[2];
 
+uint32_t xb_usb_rx_count, xb_usb_tx_count;
+
 #define QN 64u
 static uint32_t txq[QN], rxq[QN];
 static uint32_t tx_w, tx_r, rx_w, rx_r;
@@ -317,6 +319,7 @@ static void ep1_rx(void)
         rxq[rx_w++ % QN] = ep1rx[i] | (uint32_t)ep1rx[i + 1] << 8 | (uint32_t)ep1rx[i + 2] << 16 |
                            (uint32_t)ep1rx[i + 3] << 24;
     usb.rx_pend = 0;
+    xb_usb_rx_count++;
     csr = (csr & ~0x164u) | 0x10u;
     sie_wr(S_RXCSR1, csr & 0xFFu);
     sie_wr(S_RXCSR2, csr >> 8);
@@ -346,6 +349,7 @@ static void ep1_tx(void)
     XB_USB_EP_TADR(1) = (uint32_t)(uintptr_t)ep1tx;
     XB_USB_EP_CNT(1) = n;
     sie_wr(S_TXCSR1, sie_rd(S_TXCSR1) | 0x01u);
+    xb_usb_tx_count++;
 }
 
 void xb_usb_poll(void)
