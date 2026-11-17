@@ -79,9 +79,78 @@ Status: ✅ done · 🔨 in progress · ⬜ to do
 - ⬜ Second core renders voices, first core runs everything else
 - ⬜ Fallback to one core on units where the second core is unreliable
 
-### 7. Sound engine and interface ⬜
+### 7. Voice budget ⬜
 
-- ⬜ What Xebec actually plays, and how it is played
+Measured before any feature is promised: everything below is sized by it.
+
+- ⬜ How many FM voices Xebec renders at once on an FM-1 (one core and two), with effects running
+- ⬜ From that: the number of layers, voices per layer and effects per layer
+
+### 8. Synth workstation ⬜
+
+Xebec is an instrument first, then a sequencer, then a mixer. No generative
+music at its centre: a composer is there only as a tool, when the player
+calls it.
+
+**Start-up**
+
+- ⬜ Boots straight into a playable instrument; optionally into the last session instead
+- ⬜ No fresh groove at power-on
+
+**Sound**
+
+- ⬜ Multitimbral FM engine: several layers, each with its own patch
+- ⬜ Patch editor at the heart of the firmware: shape a sound with the knobs, try it on the keys, save it as your own
+- ⬜ Own patch library, saved in flash
+- ⬜ Real synth effects per layer, plus master effects
+- ⬜ No samples, no synthesized cymbals; flash goes to the player's own patches (a tiny crisp drum kit is the only possible exception)
+
+**Sequencer**
+
+- ⬜ Step entry and live recording with quantise
+- ⬜ Real triplets and quintuplets (different notes per step) and time signatures beyond 4/4
+- ⬜ Patterns replay everything: all effects are kept and saved with a pattern
+- ⬜ Song chaining: song sections are patterns, linked into a full song
+- ⬜ Knob moves recorded into patterns (motion recording); the session format ready for it from the start
+- ⬜ Arpeggiator with several modes, per layer
+- ⬜ Chord changes and modulation to another key
+- ⬜ One global quantise setting for changes: instant or on the next bar
+
+**Mixer**
+
+- ⬜ Each layer's home page has its tone knobs right there (filter, resonance, drive)
+- ⬜ Pump (ducking) and space pages: reverb, delay, width
+- ⬜ Mute and fade in/out per layer
+- ⬜ Stereo meter and load (CPU) meter always on the main screen
+
+**Composer (tool only)**
+
+- ⬜ Works only on what is selected: fill a pattern, write a bass line under the chords, vary a part, harmonise a melody
+- ⬜ Every composer action undone with one press
+- ⬜ Never touches anything the player played
+
+**Playing**
+
+- ⬜ Keys played as pressed; SNAP to the scale as an option, off by default
+- ⬜ Held notes on brass and wind patches get a slight, human vibrato
+
+**Interface**
+
+- ⬜ UI plan at real FM-1 size, approved before any code
+- ⬜ The SELECT knob alone can manage the whole system
+- ⬜ Long press on HOME always goes back to the first home screen; PLAY and REC work on every screen
+- ⬜ Keys are only for playing and entering steps, never for settings
+- ⬜ Settings page: hardware, licence, CPU, memory, credits
+
+**MIDI and sync**
+
+- ⬜ MIDI out per layer, with a page to see what goes out
+- ⬜ MIDI learn, following the shared MIDI implementation chart of its sister firmwares
+- ⬜ Clock in and out to industry sync standards, on a menu page of its own
+
+**Saving**
+
+- ⬜ Sessions, single layers and single patches saved; save slots plus a LAST slot
 
 ## Later
 
